@@ -1,5 +1,6 @@
 Repositório dedicado a pesquisa sobre "robotic grasping" de Caio Viturino.
 
+------------
 ### Reunião - 25/11
 Assuntos abordados:
 1. Utilizar, preferencialmente, os dispositivos já presentes no laboratório, como o UR5, Intel Realsense e o Gripper 2-Fingers Robotiq

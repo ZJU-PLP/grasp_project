@@ -1,4 +1,9 @@
 Repositório dedicado a pesquisa sobre "robotic grasping" de Caio Viturino.
+------------
+### Usage
+
+First run kinect driver
+`rosrun kinect2_bridge kinect2_bridge depth_method:=opengl reg_method:=cpu`
 
 ------------
 ### Reunião - 25/11/2019

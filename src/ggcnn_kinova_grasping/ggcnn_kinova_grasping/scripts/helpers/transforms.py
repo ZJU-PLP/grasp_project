@@ -1,4 +1,4 @@
-ra# Helper Functions for Robot Movement
+# Helper Functions for Robot Movement
 # Stolen from the ACRV 2017 Amazon Robotics Challenge
 import rospy
 import geometry_msgs.msg as gmsg
@@ -7,7 +7,7 @@ import tf2_geometry_msgs
 
 # Create buffer and listener
 tfBuffer = tf2_ros.Buffer()
-listener = tf2_ros.TransformListener(tfBuffer)
+# listener = tf2_ros.TransformListener(tfBuffer)
 
 def convert_pose(pose, from_frame, to_frame):
     """

@@ -5,6 +5,7 @@ import time
 import numpy as np
 import tensorflow as tf
 from keras.models import load_model
+from tf import TransformListener
 
 import cv2
 import scipy.ndimage as ndimage
@@ -14,12 +15,13 @@ from skimage.feature import peak_local_max
 import rospy
 from cv_bridge import CvBridge
 from geometry_msgs.msg import PoseStamped
-from sensor_msgs.msg import Image, CameraInfo
+from sensor_msgs.msg import Image, CameraInfo, JointState
 from std_msgs.msg import Float32MultiArray
 
 import copy
 
 bridge = CvBridge()
+
 
 # Load the Network.
 MODEL_FILE = '/home/caio/2_ROS/Doutorado/src/ggcnn/data/networks/ggcnn_rss/epoch_29_model.hdf5'
@@ -27,6 +29,7 @@ with tf.device('/device:GPU:0'):
     model = load_model(MODEL_FILE)
 
 rospy.init_node('ggcnn_detection')
+transf = TransformListener()
 
 # Output publishers.
 grasp_pub = rospy.Publisher('ggcnn/img/grasp', Image, queue_size=1)
@@ -34,6 +37,9 @@ grasp_plain_pub = rospy.Publisher('ggcnn/img/grasp_plain', Image, queue_size=1)
 depth_pub = rospy.Publisher('ggcnn/img/depth', Image, queue_size=1)
 ang_pub = rospy.Publisher('ggcnn/img/ang', Image, queue_size=1)
 cmd_pub = rospy.Publisher('ggcnn/out/command', Float32MultiArray, queue_size=1)
+
+camera_topic_info = '/kinect2/qhd/camera_info'
+camera_topic = '/kinect2/qhd/image_depth_rect'
 
 'FOR TEST'
 depth_pub2 = rospy.Publisher('ggcnn/img/antes', Image, queue_size=1)
@@ -48,9 +54,7 @@ ROBOT_Z = 0
 graph = tf.get_default_graph()
 
 # Get the camera parameters
-# camera_info_msg = rospy.wait_for_message('/camera/depth/camera_info', CameraInfo)
-camera_info_msg = rospy.wait_for_message('/kinect2/sd/camera_info', CameraInfo)
-# camera_info_msg = rospy.wait_for_message('/camera/depth/camera_info', CameraInfo)
+camera_info_msg = rospy.wait_for_message(camera_topic_info, CameraInfo)
 K = camera_info_msg.K
 fx = K[0]
 cx = K[2]
@@ -78,10 +82,12 @@ class TimeIt:
         if self.print_output:
             print('%s: %s' % (self.s, self.t1 - self.t0))
 
+# not used anymore
 def robot_pos_callback(data):
     global ROBOT_Z
-    ROBOT_Z = data.pose.position.z
 
+    # ROBOT_Z = data.pose.position.z
+    ROBOT_Z = 0.35
 
 def depth_callback(depth_message):
     global model
@@ -89,6 +95,11 @@ def depth_callback(depth_message):
     global prev_mp
     global ROBOT_Z
     global fx, cx, fy, cy
+    global transf
+
+    # The EOF position should be tracked in real time by depth_callback
+    link_pose, _ = transf.lookupTransform("base_link", "grasping_link", rospy.Time(0))
+    ROBOT_Z = link_pose[2]
 
     # cada width eh utilizado para calcular o tempo de cada processamento
     with TimeIt('Crop'):
@@ -144,8 +155,8 @@ def depth_callback(depth_message):
         depth_scale = np.abs(depth_crop).max()
 
         'TESTE - ANTES'
-        antes = copy.deepcopy(depth_crop)
-        depth_pub2.publish(bridge.cv2_to_imgmsg(antes))
+        # antes = copy.deepcopy(depth_crop)
+        # depth_pub2.publish(bridge.cv2_to_imgmsg(antes))
 
         # Normalize
         depth_crop = depth_crop.astype(np.float32)/depth_scale  # Has to be float32, 64 not supported.
@@ -175,17 +186,18 @@ def depth_callback(depth_message):
         # print(depth_crop.mean())
         # The D435 publishes depth in "16-bit unsigned integers in millimeter resolution."
 
-        print(depth_crop - depth_crop.mean())
-        depth_crop = np.clip((depth_crop - depth_crop.mean()), -1, 1)
+        # values smaller than -1 become -1, and values larger than 1 become 1.
+        depth_crop = np.clip((depth_crop - depth_crop.mean()), -0.2, 0.2)
 
         'TESTE - DEPOIS'
-        depois = copy.deepcopy(depth_crop)
-        depth_pub3.publish(bridge.cv2_to_imgmsg(depois))
+        # depois = copy.deepcopy(depth_crop)
+        # depth_pub3.publish(bridge.cv2_to_imgmsg(depois))
 
         with graph.as_default():
             pred_out = model.predict(depth_crop.reshape((1, 300, 300, 1)))
 
         # tambem retira os NaN presente no depth_crop
+        # pred_out shape is (4, 1, 300, 300, 1)
         points_out = pred_out[0].squeeze()
         points_out[depth_nan] = 0
 
@@ -209,6 +221,7 @@ def depth_callback(depth_message):
 
         ALWAYS_MAX = True  # Use ALWAYS_MAX = True for the open-loop solution.
 
+        # ou seja, se a altura do tool for maior que 0.34 ou open_open loop, o codigo abaixo eh executado
         if ROBOT_Z > 0.34 or ALWAYS_MAX:  # > 0.34 initialises the max tracking when the robot is reset.
             # Track the global max.
             # argmax returns max pixel in points_out
@@ -238,6 +251,7 @@ def depth_callback(depth_message):
 
         # altura do ponto identificado
         point_depth = depth[max_pixel[0], max_pixel[1]]
+        # print(point_depth)
 
         # These magic numbers are my camera intrinsic parameters.
         x = (max_pixel[1] - cx)/(fx) * point_depth
@@ -249,11 +263,15 @@ def depth_callback(depth_message):
 
     with TimeIt('Draw'):
         # Draw grasp markers on the points_out and publish it. (for visualisation)
+        # points_out was used in gaussian_filter for last
         grasp_img = np.zeros((300, 300, 3), dtype=np.uint8)
+        # Draw the red area in the image
         grasp_img[:,:,2] = (points_out * 255.0)
 
+        # grasp plain does not have the green point
         grasp_img_plain = grasp_img.copy()
 
+        # draw the circle at the green point
         rr, cc = circle(prev_mp[0], prev_mp[1], 5)
         grasp_img[rr, cc, 0] = 0
         grasp_img[rr, cc, 1] = 255
@@ -270,7 +288,6 @@ def depth_callback(depth_message):
         grasp_plain_pub.publish(grasp_img_plain)
 
         depth_pub.publish(bridge.cv2_to_imgmsg(depth_crop))
-
         ang_pub.publish(bridge.cv2_to_imgmsg(ang_out))
 
         # Output the best grasp pose relative to camera.
@@ -278,11 +295,7 @@ def depth_callback(depth_message):
         cmd_msg.data = [x, y, z, ang, width]#, depth_center]
         cmd_pub.publish(cmd_msg)
 
-
-# depth_sub = rospy.Subscriber('/camera/depth/image_meters', Image, depth_callback, queue_size=1)
-depth_sub = rospy.Subscriber('/kinect2/sd/image_depth', Image, depth_callback, queue_size=1)
-
-# depth_sub = rospy.Subscriber('/camera/depth/image_rect_raw', Image, depth_callback, queue_size=1)
+depth_sub = rospy.Subscriber(camera_topic, Image, depth_callback, queue_size=1)
 
 # robot_pos_sub = rospy.Subscriber('/m1n6s200_driver/out/tool_pose', PoseStamped, robot_pos_callback, queue_size=1)
 

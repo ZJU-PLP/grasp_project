@@ -12,7 +12,7 @@ import std_srvs.srv
 import geometry_msgs.msg
 
 from helpers.gripper_action_client import set_finger_positions
-from helpers.position_action_client import position_client, move_to_position
+from helpers.ur5_position_action_client import position_client, move_to_position
 from helpers.transforms import current_robot_pose, publish_tf_quaterion_as_transform, convert_pose, publish_pose_as_transform
 from helpers.covariance import generate_cartesian_covariance
 
@@ -142,7 +142,8 @@ if __name__ == '__main__':
     rospy.init_node('ggcnn_open_loop_grasp')
 
     # Robot Monitors.
-    wrench_sub = rospy.Subscriber('/m1n6s200_driver/out/tool_wrench', geometry_msgs.msg.WrenchStamped, robot_wrench_callback, queue_size=1)
+    # Wrench is used to detect objects in the gripper
+    # wrench_sub = rospy.Subscriber('/m1n6s200_driver/out/tool_wrench', geometry_msgs.msg.WrenchStamped, robot_wrench_callback, queue_size=1)
     position_sub = rospy.Subscriber('/m1n6s200_driver/out/tool_pose', geometry_msgs.msg.PoseStamped, robot_position_callback, queue_size=1)
 
     # https://github.com/dougsm/rosbag_recording_services
@@ -150,25 +151,25 @@ if __name__ == '__main__':
     # stop_record_srv = rospy.ServiceProxy('/data_recording/stop_recording', std_srvs.srv.Trigger)
 
     # Enable/disable force control.
-    start_force_srv = rospy.ServiceProxy('/m1n6s200_driver/in/start_force_control', kinova_msgs.srv.Start)
-    stop_force_srv = rospy.ServiceProxy('/m1n6s200_driver/in/stop_force_control', kinova_msgs.srv.Stop)
+    # start_force_srv = rospy.ServiceProxy('/m1n6s200_driver/in/start_force_control', kinova_msgs.srv.Start)
+    # stop_force_srv = rospy.ServiceProxy('/m1n6s200_driver/in/stop_force_control', kinova_msgs.srv.Stop)
 
     # Home position.
     move_to_position([0, -0.38, 0.25], [0.99, 0, 0, np.sqrt(1-0.99**2)])
 
-    while not rospy.is_shutdown():
-
-        rospy.sleep(0.5)
-        set_finger_positions([0, 0])
-        rospy.sleep(0.5)
-
-        raw_input('Press Enter to Start.')
-
-        # start_record_srv(std_srvs.srv.TriggerRequest())
-        rospy.sleep(0.5)
-        execute_grasp()
-        move_to_position([0, -0.38, 0.25], [0.99, 0, 0, np.sqrt(1-0.99**2)])
-        rospy.sleep(0.5)
-        # stop_record_srv(std_srvs.srv.TriggerRequest())
-
-        raw_input('Press Enter to Complete')
+    # while not rospy.is_shutdown():
+    #
+    #     rospy.sleep(0.5)
+    #     set_finger_positions([0, 0])
+    #     rospy.sleep(0.5)
+    #
+    #     raw_input('Press Enter to Start.')
+    #
+    #     # start_record_srv(std_srvs.srv.TriggerRequest())
+    #     rospy.sleep(0.5)
+    #     execute_grasp()
+    #     move_to_position([0, -0.38, 0.25], [0.99, 0, 0, np.sqrt(1-0.99**2)])
+    #     rospy.sleep(0.5)
+    #     # stop_record_srv(std_srvs.srv.TriggerRequest())
+    #
+    #     raw_input('Press Enter to Complete')

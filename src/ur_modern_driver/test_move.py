@@ -1,4 +1,19 @@
 #!/usr/bin/env python
+#
+# Copyright 2015, 2016 Thomas Timm Andersen (original version)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import time
 import roslib; roslib.load_manifest('ur_driver')
 import rospy
@@ -10,9 +25,9 @@ from math import pi
 
 JOINT_NAMES = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint',
                'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
-Q1 = [0,-1.57,0,0,0,0]
-Q2 = [0,-1.57,0,0,0,-1.57]
-#Q3 = [0,-1.57,0,0,0,0]
+Q1 = [2.2,0,-1.57,0,0,0]
+Q2 = [1.5,0,-1.57,0,0,0]
+Q3 = [1.5,-0.2,-1.57,0,0,0]
     
 client = None
 
@@ -27,8 +42,8 @@ def move1():
         g.trajectory.points = [
             JointTrajectoryPoint(positions=joints_pos, velocities=[0]*6, time_from_start=rospy.Duration(0.0)),
             JointTrajectoryPoint(positions=Q1, velocities=[0]*6, time_from_start=rospy.Duration(2.0)),
-            JointTrajectoryPoint(positions=Q2, velocities=[0]*6, time_from_start=rospy.Duration(3.0))]
-            #JointTrajectoryPoint(positions=Q3, velocities=[0]*6, time_from_start=rospy.Duration(4.0))
+            JointTrajectoryPoint(positions=Q2, velocities=[0]*6, time_from_start=rospy.Duration(3.0)),
+            JointTrajectoryPoint(positions=Q3, velocities=[0]*6, time_from_start=rospy.Duration(4.0))]
         client.send_goal(g)
         client.wait_for_result()
     except KeyboardInterrupt:
@@ -123,8 +138,7 @@ def main():
     global client
     try:
         rospy.init_node("test_move", anonymous=True, disable_signals=True)
-        #client = actionlib.SimpleActionClient('follow_joint_trajectory', FollowJointTrajectoryAction) # REAL ROBOT
-        client = actionlib.SimpleActionClient('arm_controller/follow_joint_trajectory', FollowJointTrajectoryAction) # GAZEBO
+        client = actionlib.SimpleActionClient('follow_joint_trajectory', FollowJointTrajectoryAction)
         print "Waiting for server..."
         client.wait_for_server()
         print "Connected to server"
@@ -137,12 +151,12 @@ def main():
         print "This program makes the robot move between the following three poses:"
         print str([Q1[i]*180./pi for i in xrange(0,6)])
         print str([Q2[i]*180./pi for i in xrange(0,6)])
-        #print str([Q3[i]*180./pi for i in xrange(0,6)])
+        print str([Q3[i]*180./pi for i in xrange(0,6)])
         print "Please make sure that your robot can move freely between these poses before proceeding!"
         inp = raw_input("Continue? y/n: ")[0]
         if (inp == 'y'):
-            move1()
-            #move_repeated()
+            #move1()
+            move_repeated()
             #move_disordered()
             #move_interrupt()
         else:

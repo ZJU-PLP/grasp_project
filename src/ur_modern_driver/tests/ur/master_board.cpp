@@ -1,3 +1,19 @@
+/*
+ * Copyright 2017, 2018 Simon Rasmussen (refactor)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "ur_modern_driver/ur/master_board.h"
 #include <gtest/gtest.h>
 #include "ur_modern_driver/bin_parser.h"
@@ -9,7 +25,7 @@
 TEST(MasterBoardData_V1_X, testRandomDataParsing)
 {
   RandomDataTest rdt(71);
-  rdt.set<uint8_t>(1, 58); //sets euromap67_interface_installed to true
+  rdt.set<uint8_t>(1, 58);  // sets euromap67_interface_installed to true
   BinParser bp = rdt.getParser();
   MasterBoardData_V1_X state;
 
@@ -36,14 +52,14 @@ TEST(MasterBoardData_V1_X, testRandomDataParsing)
   ASSERT_EQ(rdt.getNext<int32_t>(), state.euromap_output_bits);
   ASSERT_EQ(rdt.getNext<int16_t>(), state.euromap_voltage);
   ASSERT_EQ(rdt.getNext<int16_t>(), state.euromap_current);
-  
+
   ASSERT_TRUE(bp.empty()) << "Did not consume all data";
 }
 
 TEST(MasterBoardData_V3_0__1, testRandomDataParsing)
 {
   RandomDataTest rdt(83);
-  rdt.set<uint8_t>(1, 62); //sets euromap67_interface_installed to true
+  rdt.set<uint8_t>(1, 62);  // sets euromap67_interface_installed to true
   BinParser bp = rdt.getParser();
   MasterBoardData_V3_0__1 state;
   ASSERT_TRUE(state.parseWith(bp)) << "parse() returned false";
@@ -69,7 +85,7 @@ TEST(MasterBoardData_V3_0__1, testRandomDataParsing)
   ASSERT_EQ(rdt.getNext<int32_t>(), state.euromap_output_bits);
   ASSERT_EQ(rdt.getNext<float>(), state.euromap_voltage);
   ASSERT_EQ(rdt.getNext<float>(), state.euromap_current);
-  
+
   rdt.skip(sizeof(uint32_t));
 
   ASSERT_TRUE(bp.empty()) << "Did not consume all data";
@@ -78,7 +94,7 @@ TEST(MasterBoardData_V3_0__1, testRandomDataParsing)
 TEST(MasterBoardData_V3_2, testRandomDataParsing)
 {
   RandomDataTest rdt(85);
-  rdt.set<uint8_t>(1, 62); //sets euromap67_interface_installed to true
+  rdt.set<uint8_t>(1, 62);  // sets euromap67_interface_installed to true
   BinParser bp = rdt.getParser();
   MasterBoardData_V3_2 state;
   ASSERT_TRUE(state.parseWith(bp)) << "parse() returned false";

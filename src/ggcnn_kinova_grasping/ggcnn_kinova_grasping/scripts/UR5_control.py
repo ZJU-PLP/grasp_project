@@ -1,78 +1,55 @@
 #!/usr/bin/env python
-# Software License Agreement (BSD License)
-#
-# Copyright (c) 2008, Willow Garage, Inc.
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-#  * Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#  * Redistributions in binary form must reproduce the above
-#    copyright notice, this list of conditions and the following
-#    disclaimer in the documentation and/or other materials provided
-#    with the distribution.
-#  * Neither the name of Willow Garage, Inc. nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
-#
-# Revision $Id$
 
-## Simple talker demo that published std_msgs/Strings messages
-## to the 'chatter' topic
+#INFO:
 
+# This code takes the joint velocities from the vs_ur5.node and publishes it to the robot, thus making it move.
+
+# Subscribers: ur5_joint_velocities (takes joint velocities from vs_ur5.py) //velocities are in rad/s
+
+# Publishers: /ur_driver/joint_speed (publishes joint speed to the robot)
 import rospy
-from std_msgs.msg import String
-
-from trajectory_msgs.msg import JointTrajectory
-from trajectory_msgs.msg import JointTrajectoryPoint
-
+# from ur5_control_nodes.msg import floatList
+from sensor_msgs.msg import JointState
 import numpy as np
+from std_msgs.msg import Header
+from control_msgs.msg import *
+from trajectory_msgs.msg import *
 
-def talker():
+joint_vel=None
+JOINT_NAMES=['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint','wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
+
+#takes joint velocities from the topic ur5_joint_velocities as defined in run_ur5()
+def joint_velocity_callback(data):
+    global joint_vel
+    joint_vel = data.data
+    # print joint_vel
+
+#publishes joint velocities to the topic /ur_driver/joint_speed as defined in run_ur5()
+def joint_states(velocity):
+    global JOINT_NAMES
     pub = rospy.Publisher('/ur_driver/joint_speed', JointTrajectory, queue_size=10)
-    rospy.init_node('talker', anonymous=True)
     rate = rospy.Rate(125) # 10hz
+    hello_str = JointTrajectory()
+    hello_str.header = Header()
+    hello_str.joint_names=JOINT_NAMES
+    hello_str.points=[JointTrajectoryPoint(velocities=velocity, time_from_start=rospy.Duration(0.0)),JointTrajectoryPoint(time_from_start=rospy.Duration(0.0))]
+    print hello_str.points
+    hello_str.header.seq=hello_str.header.seq+1
+    hello_str.header.stamp=rospy.Time.now()
+    pub.publish(hello_str)
+    # print velocity
+    rate.sleep()
 
-    trajectory = JointTrajectory()
-    i_seq = 0
-
-    qvel = [0, 0, 0, 0, 0, 0]
+# main function
+def run_ur5():
+    global joint_vel
+    rospy.init_node('run_ur5', anonymous=True)
+    # rospy.Subscriber("ur5_joint_velocities", floatList, joint_velocity_callback)
     while not rospy.is_shutdown():
-        # hello_str = "hello world %s" % rospy.get_time()
-
-        for i in range(6):
-            qvel[i] += (np.random.rand()-0.5)*2* 0.01
-        # qvel[-2] += (np.random.rand()-0.5)*2* 0.01
-        current_time = rospy.Time.now()
-        trajectory.header.seq = i_seq
-        i_seq += 1
-
-        trajectory.header.stamp = current_time
-        trajectory.joint_names = ['elbow_joint', 'shoulder_lift_joint', 'shoulder_pan_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
-        trajectory.points = [
-            JointTrajectoryPoint(velocities=qvel)]
-        rospy.loginfo(trajectory)
-        pub.publish(trajectory)
-        rate.sleep()
+        joint_states([1.0, 0, 0, 0, 0, 0])
 
 if __name__ == '__main__':
     try:
-        talker()
+        run_ur5()
     except rospy.ROSInterruptException:
         pass

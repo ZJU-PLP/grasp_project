@@ -35,6 +35,7 @@ set_target_properties(ur5_kin PROPERTIES COMPILE_DEFINITIONS "UR5_PARAMS")
 add_library(ur10_kin src/ur_kin.cpp)
 set_target_properties(ur10_kin PROPERTIES COMPILE_DEFINITIONS "UR10_PARAMS")
 
+
 add_library(ur3_moveit_plugin src/ur_moveit_plugin.cpp)
 set_target_properties(ur3_moveit_plugin PROPERTIES COMPILE_DEFINITIONS "UR3_PARAMS")
 target_link_libraries(ur3_moveit_plugin

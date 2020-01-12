@@ -1,9 +1,25 @@
+/*
+ * Copyright 2017, 2018 Jarek Potiuk (low bandwidth trajectory follower)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "ur_modern_driver/ros/lowbandwidth_trajectory_follower.h"
 #include <endian.h>
-#include <cmath>
 #include <ros/ros.h>
+#include <cmath>
 
-static const std::array<double, 6> EMPTY_VALUES = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+static const std::array<double, 6> EMPTY_VALUES = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 
 static const std::string TIME_INTERVAL("{{TIME_INTERVAL}}");
 static const std::string SERVOJ_TIME("{{SERVOJ_TIME}}");
@@ -233,8 +249,8 @@ end
 
 )";
 
-LowBandwidthTrajectoryFollower::LowBandwidthTrajectoryFollower(URCommander &commander, std::string &reverse_ip, int reverse_port,
-                                       bool version_3)
+LowBandwidthTrajectoryFollower::LowBandwidthTrajectoryFollower(URCommander &commander, std::string &reverse_ip,
+                                                               int reverse_port, bool version_3)
   : running_(false)
   , commander_(commander)
   , server_(reverse_port)
@@ -256,7 +272,8 @@ LowBandwidthTrajectoryFollower::LowBandwidthTrajectoryFollower(URCommander &comm
 
   std::string res(POSITION_PROGRAM);
   std::ostringstream out;
-  if (!version_3) {
+  if (!version_3)
+  {
     LOG_ERROR("Low Bandwidth Trajectory Follower only works for interface version > 3");
     std::exit(-1);
   }
@@ -307,8 +324,8 @@ bool LowBandwidthTrajectoryFollower::start()
 }
 
 bool LowBandwidthTrajectoryFollower::execute(const std::array<double, 6> &positions,
-                                     const std::array<double, 6> &velocities,
-                                     double sample_number, double time_in_seconds)
+                                             const std::array<double, 6> &velocities, double sample_number,
+                                             double time_in_seconds)
 {
   if (!running_)
     return false;
@@ -317,11 +334,11 @@ bool LowBandwidthTrajectoryFollower::execute(const std::array<double, 6> &positi
 
   out << "(";
   out << sample_number << ",";
-  for (auto const &pos: positions)
+  for (auto const &pos : positions)
   {
     out << pos << ",";
   }
-  for (auto const &vel: velocities)
+  for (auto const &vel : velocities)
   {
     out << vel << ",";
   }
@@ -331,7 +348,7 @@ bool LowBandwidthTrajectoryFollower::execute(const std::array<double, 6> &positi
   // We have only ASCII characters and we can cast char -> uint_8
   const std::string tmp = out.str();
   const char *formatted_message = tmp.c_str();
-  const uint8_t *buf = (uint8_t *) formatted_message;
+  const uint8_t *buf = (uint8_t *)formatted_message;
 
   size_t written;
   LOG_DEBUG("Sending message %s", formatted_message);
@@ -346,32 +363,33 @@ bool LowBandwidthTrajectoryFollower::execute(std::vector<TrajectoryPoint> &traje
 
   bool finished = false;
 
-  char* line[MAX_SERVER_BUF_LEN];
+  char *line[MAX_SERVER_BUF_LEN];
 
   bool res = true;
 
   while (!finished && !interrupt)
   {
-     if (!server_.readLine((char *)line, MAX_SERVER_BUF_LEN))
-     {
-        LOG_DEBUG("Connection closed. Finishing!");
-        finished = true;
-        break;
-     }
-     unsigned int message_num=atoi((const char *) line);
-     LOG_DEBUG("Received request %i", message_num);
-     if (message_num < trajectory.size())
-     {
-        res = execute(trajectory[message_num].positions, trajectory[message_num].velocities,
-                message_num, trajectory[message_num].time_from_start.count() / 1e6);
-     } else
-     {
-        res = execute(EMPTY_VALUES, EMPTY_VALUES, message_num, 0.0);
-     }
-     if (!res)
-     {
-        finished = true;
-     }
+    if (!server_.readLine((char *)line, MAX_SERVER_BUF_LEN))
+    {
+      LOG_DEBUG("Connection closed. Finishing!");
+      finished = true;
+      break;
+    }
+    unsigned int message_num = atoi((const char *)line);
+    LOG_DEBUG("Received request %i", message_num);
+    if (message_num < trajectory.size())
+    {
+      res = execute(trajectory[message_num].positions, trajectory[message_num].velocities, message_num,
+                    trajectory[message_num].time_from_start.count() / 1e6);
+    }
+    else
+    {
+      res = execute(EMPTY_VALUES, EMPTY_VALUES, message_num, 0.0);
+    }
+    if (!res)
+    {
+      finished = true;
+    }
   }
   return res;
 }

@@ -1,3 +1,21 @@
+/*
+ * Copyright 2017, 2018 Simon Rasmussen (refactor)
+ *
+ * Copyright 2015, 2016 Thomas Timm Andersen (original version)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "ur_modern_driver/ur/commander.h"
 #include "ur_modern_driver/log.h"
 
@@ -22,7 +40,7 @@ void URCommander::formatArray(std::ostringstream &out, std::array<double, 6> &va
 
 bool URCommander::uploadProg(const std::string &s)
 {
-  LOG_DEBUG("Sending program [%s]",s.c_str());
+  LOG_DEBUG("Sending program [%s]", s.c_str());
   return write(s);
 }
 
@@ -73,7 +91,9 @@ bool URCommander_V1_X::speedj(std::array<double, 6> &speeds, double acceleration
 bool URCommander_V1_X::setAnalogOut(uint8_t pin, double value)
 {
   std::ostringstream out;
-  out << "sec io_fun():\n" << "set_analog_out(" << (int)pin << "," << std::fixed << std::setprecision(4) << value << ")\n" << "end\n";
+  out << "sec io_fun():\n"
+      << "set_analog_out(" << (int)pin << "," << std::fixed << std::setprecision(4) << value << ")\n"
+      << "end\n";
   std::string s(out.str());
   return write(s);
 }
@@ -81,7 +101,9 @@ bool URCommander_V1_X::setAnalogOut(uint8_t pin, double value)
 bool URCommander_V1_X::setDigitalOut(uint8_t pin, bool value)
 {
   std::ostringstream out;
-  out << "sec io_fun():\n" << "set_digital_out(" << (int)pin << "," << (value ? "True" : "False") << ")\n" << "end\n";
+  out << "sec io_fun():\n"
+      << "set_digital_out(" << (int)pin << "," << (value ? "True" : "False") << ")\n"
+      << "end\n";
   std::string s(out.str());
   return write(s);
 }
@@ -89,7 +111,9 @@ bool URCommander_V1_X::setDigitalOut(uint8_t pin, bool value)
 bool URCommander_V3_X::setAnalogOut(uint8_t pin, double value)
 {
   std::ostringstream out;
-  out << "sec io_fun():\n" << "set_standard_analog_out(" << (int)pin << "," << std::fixed << std::setprecision(5) << value << ")\n" << "end\n";
+  out << "sec io_fun():\n"
+      << "set_standard_analog_out(" << (int)pin << "," << std::fixed << std::setprecision(5) << value << ")\n"
+      << "end\n";
   std::string s(out.str());
   return write(s);
 }
@@ -116,7 +140,9 @@ bool URCommander_V3_X::setDigitalOut(uint8_t pin, bool value)
   else
     return false;
 
-  out << "sec io_fun():\n" << func << "(" << (int)pin << "," << (value ? "True" : "False") << ")\n" << "end\n";
+  out << "sec io_fun():\n"
+      << func << "(" << (int)pin << "," << (value ? "True" : "False") << ")\n"
+      << "end\n";
   std::string s(out.str());
   return write(s);
 }

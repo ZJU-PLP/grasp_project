@@ -1,0 +1,6 @@
+geometric_shapes
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/geometric_shapes/cmake.lock /home/caio/2_ROS/Doutorado_grasping/devel/./cmake.lock
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/geometric_shapes/lib/libgeometric_shapes.so /home/caio/2_ROS/Doutorado_grasping/devel/lib/libgeometric_shapes.so
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/geometric_shapes/lib/pkgconfig/geometric_shapes.pc /home/caio/2_ROS/Doutorado_grasping/devel/lib/pkgconfig/geometric_shapes.pc
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/geometric_shapes/share/geometric_shapes/cmake/geometric_shapesConfig.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/geometric_shapes/cmake/geometric_shapesConfig.cmake
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/geometric_shapes/share/geometric_shapes/cmake/geometric_shapesConfig-version.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/geometric_shapes/cmake/geometric_shapesConfig-version.cmake

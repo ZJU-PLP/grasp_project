@@ -1,0 +1,5 @@
+universal_robot/ur_bringup
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/ur_bringup/cmake.lock /home/caio/2_ROS/Doutorado_grasping/devel/./cmake.lock
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/ur_bringup/lib/pkgconfig/ur_bringup.pc /home/caio/2_ROS/Doutorado_grasping/devel/lib/pkgconfig/ur_bringup.pc
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/ur_bringup/share/ur_bringup/cmake/ur_bringupConfig.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/ur_bringup/cmake/ur_bringupConfig.cmake
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/ur_bringup/share/ur_bringup/cmake/ur_bringupConfig-version.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/ur_bringup/cmake/ur_bringupConfig-version.cmake

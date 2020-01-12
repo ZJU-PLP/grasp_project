@@ -1,0 +1,10 @@
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/include/ur_driver/URDriverConfig.h
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/lib/pkgconfig/ur_driver.pc
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/lib/python2.7/dist-packages/ur_driver/__init__.py
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/lib/python2.7/dist-packages/ur_driver/cfg/__init__.py
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/lib/python2.7/dist-packages/ur_driver/cfg/URDriverConfig.py
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/share/ur_driver/cmake/ur_driverConfig.cmake
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/share/ur_driver/cmake/ur_driverConfig-version.cmake
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/share/ur_driver/docs/URDriverConfig.dox
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/share/ur_driver/docs/URDriverConfig-usage.dox
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/share/ur_driver/docs/URDriverConfig.wikidoc

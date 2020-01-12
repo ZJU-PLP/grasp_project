@@ -1,0 +1,5 @@
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/lib/libcontroller_manager.so
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/lib/pkgconfig/controller_manager.pc
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/lib/python2.7/dist-packages/controller_manager/__init__.py
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/share/controller_manager/cmake/controller_managerConfig-version.cmake
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/share/controller_manager/cmake/controller_managerConfig.cmake

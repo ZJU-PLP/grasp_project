@@ -1,0 +1,6 @@
+ros_controllers/joint_state_controller
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/joint_state_controller/cmake.lock /home/caio/2_ROS/Doutorado_grasping/devel/./cmake.lock
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/joint_state_controller/lib/libjoint_state_controller.so /home/caio/2_ROS/Doutorado_grasping/devel/lib/libjoint_state_controller.so
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/joint_state_controller/lib/pkgconfig/joint_state_controller.pc /home/caio/2_ROS/Doutorado_grasping/devel/lib/pkgconfig/joint_state_controller.pc
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/joint_state_controller/share/joint_state_controller/cmake/joint_state_controllerConfig-version.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/joint_state_controller/cmake/joint_state_controllerConfig-version.cmake
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/joint_state_controller/share/joint_state_controller/cmake/joint_state_controllerConfig.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/joint_state_controller/cmake/joint_state_controllerConfig.cmake

@@ -32,7 +32,7 @@ namespace ur_kinematics {
     const double d5 =  0.09465;
     const double d6 =  0.0823;
     #endif
-
+    
     //#define UR3_PARAMS
     #ifdef UR3_PARAMS
     const double d1 =  0.1519;
@@ -46,37 +46,29 @@ namespace ur_kinematics {
 
   void forward(const double* q, double* T) {
     double s1 = sin(*q), c1 = cos(*q); q++;
-    double q234 = *q, s2 = sin(*q), c2 = cos(*q); q++;
-    double s3 = sin(*q), c3 = cos(*q); q234 += *q; q++;
-    q234 += *q; q++;
+    double q23 = *q, q234 = *q, s2 = sin(*q), c2 = cos(*q); q++;
+    double s3 = sin(*q), c3 = cos(*q); q23 += *q; q234 += *q; q++;
+    double s4 = sin(*q), c4 = cos(*q); q234 += *q; q++;
     double s5 = sin(*q), c5 = cos(*q); q++;
-    double s6 = sin(*q), c6 = cos(*q);
+    double s6 = sin(*q), c6 = cos(*q); 
+    double s23 = sin(q23), c23 = cos(q23);
     double s234 = sin(q234), c234 = cos(q234);
-    *T = ((c1*c234-s1*s234)*s5)/2.0 - c5*s1 + ((c1*c234+s1*s234)*s5)/2.0; T++;
-    *T = (c6*(s1*s5 + ((c1*c234-s1*s234)*c5)/2.0 + ((c1*c234+s1*s234)*c5)/2.0) -
-          (s6*((s1*c234+c1*s234) - (s1*c234-c1*s234)))/2.0); T++;
-    *T = (-(c6*((s1*c234+c1*s234) - (s1*c234-c1*s234)))/2.0 -
-          s6*(s1*s5 + ((c1*c234-s1*s234)*c5)/2.0 + ((c1*c234+s1*s234)*c5)/2.0)); T++;
-    *T = ((d5*(s1*c234-c1*s234))/2.0 - (d5*(s1*c234+c1*s234))/2.0 -
-          d4*s1 + (d6*(c1*c234-s1*s234)*s5)/2.0 + (d6*(c1*c234+s1*s234)*s5)/2.0 -
-          a2*c1*c2 - d6*c5*s1 - a3*c1*c2*c3 + a3*c1*s2*s3); T++;
-    *T = c1*c5 + ((s1*c234+c1*s234)*s5)/2.0 + ((s1*c234-c1*s234)*s5)/2.0; T++;
-    *T = (c6*(((s1*c234+c1*s234)*c5)/2.0 - c1*s5 + ((s1*c234-c1*s234)*c5)/2.0) +
-          s6*((c1*c234-s1*s234)/2.0 - (c1*c234+s1*s234)/2.0)); T++;
-    *T = (c6*((c1*c234-s1*s234)/2.0 - (c1*c234+s1*s234)/2.0) -
-          s6*(((s1*c234+c1*s234)*c5)/2.0 - c1*s5 + ((s1*c234-c1*s234)*c5)/2.0)); T++;
-    *T = ((d5*(c1*c234-s1*s234))/2.0 - (d5*(c1*c234+s1*s234))/2.0 + d4*c1 +
-          (d6*(s1*c234+c1*s234)*s5)/2.0 + (d6*(s1*c234-c1*s234)*s5)/2.0 + d6*c1*c5 -
-          a2*c2*s1 - a3*c2*c3*s1 + a3*s1*s2*s3); T++;
-    *T = ((c234*c5-s234*s5)/2.0 - (c234*c5+s234*s5)/2.0); T++;
-    *T = ((s234*c6-c234*s6)/2.0 - (s234*c6+c234*s6)/2.0 - s234*c5*c6); T++;
-    *T = (s234*c5*s6 - (c234*c6+s234*s6)/2.0 - (c234*c6-s234*s6)/2.0); T++;
-    *T = (d1 + (d6*(c234*c5-s234*s5))/2.0 + a3*(s2*c3+c2*s3) + a2*s2 -
-         (d6*(c234*c5+s234*s5))/2.0 - d5*c234); T++;
+    *T = c234*c1*s5 - c5*s1; T++;
+    *T = c6*(s1*s5 + c234*c1*c5) - s234*c1*s6; T++;
+    *T = -s6*(s1*s5 + c234*c1*c5) - s234*c1*c6; T++;
+    *T = d6*c234*c1*s5 - a3*c23*c1 - a2*c1*c2 - d6*c5*s1 - d5*s234*c1 - d4*s1; T++;
+    *T = c1*c5 + c234*s1*s5; T++;
+    *T = -c6*(c1*s5 - c234*c5*s1) - s234*s1*s6; T++;
+    *T = s6*(c1*s5 - c234*c5*s1) - s234*c6*s1; T++;
+    *T = d6*(c1*c5 + c234*s1*s5) + d4*c1 - a3*c23*s1 - a2*c2*s1 - d5*s234*s1; T++;
+    *T = -s234*s5; T++;
+    *T = -c234*s6 - s234*c5*c6; T++;
+    *T = s234*c5*s6 - c234*c6; T++;
+    *T = d1 + a3*s23 + a2*s2 - d5*(c23*c4 - s23*s4) - d6*s5*(c23*s4 + s23*c4); T++;
     *T = 0.0; T++; *T = 0.0; T++; *T = 0.0; T++; *T = 1.0;
   }
 
-  void forward_all(const double* q, double* T1, double* T2, double* T3,
+  void forward_all(const double* q, double* T1, double* T2, double* T3, 
                                     double* T4, double* T5, double* T6) {
     double s1 = sin(*q), c1 = cos(*q); q++; // q1
     double q23 = *q, q234 = *q, s2 = sin(*q), c2 = cos(*q); q++; // q2
@@ -204,8 +196,8 @@ namespace ur_kinematics {
 
   int inverse(const double* T, double* q_sols, double q6_des) {
     int num_sols = 0;
-    double T02 = -*T; T++; double T00 =  *T; T++; double T01 =  *T; T++; double T03 = -*T; T++;
-    double T12 = -*T; T++; double T10 =  *T; T++; double T11 =  *T; T++; double T13 = -*T; T++;
+    double T02 = -*T; T++; double T00 =  *T; T++; double T01 =  *T; T++; double T03 = -*T; T++; 
+    double T12 = -*T; T++; double T10 =  *T; T++; double T11 =  *T; T++; double T13 = -*T; T++; 
     double T22 =  *T; T++; double T20 = -*T; T++; double T21 = -*T; T++; double T23 =  *T;
 
     ////////////////////////////// shoulder rotate joint (q1) //////////////////////////////
@@ -256,7 +248,7 @@ namespace ur_kinematics {
         else
           q1[0] = 2.0*PI + pos;
         if(neg >= 0.0)
-          q1[1] = neg;
+          q1[1] = neg; 
         else
           q1[1] = 2.0*PI + neg;
       }
@@ -290,7 +282,7 @@ namespace ur_kinematics {
           if(fabs(s5) < ZERO_THRESH)
             q6 = q6_des;
           else {
-            q6 = atan2(SIGN(s5)*-(T01*s1 - T11*c1),
+            q6 = atan2(SIGN(s5)*-(T01*s1 - T11*c1), 
                        SIGN(s5)*(T00*s1 - T10*c1));
             if(fabs(q6) < ZERO_THRESH)
               q6 = 0.0;
@@ -304,7 +296,7 @@ namespace ur_kinematics {
           double c6 = cos(q6), s6 = sin(q6);
           double x04x = -s5*(T02*c1 + T12*s1) - c5*(s6*(T01*c1 + T11*s1) - c6*(T00*c1 + T10*s1));
           double x04y = c5*(T20*c6 - T21*s6) - T22*s5;
-          double p13x = d5*(s6*(T00*c1 + T10*s1) + c6*(T01*c1 + T11*s1)) - d6*(T02*c1 + T12*s1) +
+          double p13x = d5*(s6*(T00*c1 + T10*s1) + c6*(T01*c1 + T11*s1)) - d6*(T02*c1 + T12*s1) + 
                         T03*c1 + T13*s1;
           double p13y = T23 - d1 - d6*T22 + d5*(T21*c6 + T20*s6);
 
@@ -337,9 +329,9 @@ namespace ur_kinematics {
             if(fabs(q4[k]) < ZERO_THRESH)
               q4[k] = 0.0;
             else if(q4[k] < 0.0) q4[k] += 2.0*PI;
-            q_sols[num_sols*6+0] = q1[i];    q_sols[num_sols*6+1] = q2[k];
-            q_sols[num_sols*6+2] = q3[k];    q_sols[num_sols*6+3] = q4[k];
-            q_sols[num_sols*6+4] = q5[i][j]; q_sols[num_sols*6+5] = q6;
+            q_sols[num_sols*6+0] = q1[i];    q_sols[num_sols*6+1] = q2[k]; 
+            q_sols[num_sols*6+2] = q3[k];    q_sols[num_sols*6+3] = q4[k]; 
+            q_sols[num_sols*6+4] = q5[i][j]; q_sols[num_sols*6+5] = q6; 
             num_sols++;
           }
 
@@ -444,8 +436,8 @@ int main(int argc, char* argv[])
   double q_sols[8*6];
   int num_sols;
   num_sols = inverse(T, q_sols);
-  for(int i=0;i<num_sols;i++)
-    printf("%1.6f %1.6f %1.6f %1.6f %1.6f %1.6f\n",
+  for(int i=0;i<num_sols;i++) 
+    printf("%1.6f %1.6f %1.6f %1.6f %1.6f %1.6f\n", 
        q_sols[i*6+0], q_sols[i*6+1], q_sols[i*6+2], q_sols[i*6+3], q_sols[i*6+4], q_sols[i*6+5]);
   for(int i=0;i<=4;i++)
     printf("%f ", PI/2.0*i);

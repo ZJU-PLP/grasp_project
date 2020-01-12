@@ -1,0 +1,5 @@
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/lib/libfour_wheel_steering_controller.so
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/lib/pkgconfig/four_wheel_steering_controller.pc
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/lib/four_wheel_steering_controller/four_wheel_steering
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/share/four_wheel_steering_controller/cmake/four_wheel_steering_controllerConfig.cmake
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/share/four_wheel_steering_controller/cmake/four_wheel_steering_controllerConfig-version.cmake

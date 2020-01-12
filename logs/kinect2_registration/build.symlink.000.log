@@ -1,0 +1,5 @@
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/lib/libkinect2_registration.so
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/lib/pkgconfig/kinect2_registration.pc
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/share/kinect2_registration/cmake/kinect2_registration.cmake
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/share/kinect2_registration/cmake/kinect2_registrationConfig.cmake
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/share/kinect2_registration/cmake/kinect2_registrationConfig-version.cmake

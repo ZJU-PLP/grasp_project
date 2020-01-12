@@ -1,0 +1,7 @@
+ros_control/controller_manager
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/controller_manager/cmake.lock /home/caio/2_ROS/Doutorado_grasping/devel/./cmake.lock
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/controller_manager/lib/libcontroller_manager.so /home/caio/2_ROS/Doutorado_grasping/devel/lib/libcontroller_manager.so
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/controller_manager/lib/pkgconfig/controller_manager.pc /home/caio/2_ROS/Doutorado_grasping/devel/lib/pkgconfig/controller_manager.pc
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/controller_manager/lib/python2.7/dist-packages/controller_manager/__init__.py /home/caio/2_ROS/Doutorado_grasping/devel/lib/python2.7/dist-packages/controller_manager/__init__.py
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/controller_manager/share/controller_manager/cmake/controller_managerConfig-version.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/controller_manager/cmake/controller_managerConfig-version.cmake
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/controller_manager/share/controller_manager/cmake/controller_managerConfig.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/controller_manager/cmake/controller_managerConfig.cmake

@@ -1,0 +1,4 @@
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/lib/libjoint_state_controller.so
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/lib/pkgconfig/joint_state_controller.pc
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/share/joint_state_controller/cmake/joint_state_controllerConfig-version.cmake
+Symlinking /home/caio/2_ROS/Doutorado_grasping/devel/share/joint_state_controller/cmake/joint_state_controllerConfig.cmake

@@ -1,0 +1,5 @@
+robotiq/robotiq_description
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/robotiq_description/cmake.lock /home/caio/2_ROS/Doutorado_grasping/devel/./cmake.lock
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/robotiq_description/lib/pkgconfig/robotiq_description.pc /home/caio/2_ROS/Doutorado_grasping/devel/lib/pkgconfig/robotiq_description.pc
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/robotiq_description/share/robotiq_description/cmake/robotiq_descriptionConfig-version.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/robotiq_description/cmake/robotiq_descriptionConfig-version.cmake
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/robotiq_description/share/robotiq_description/cmake/robotiq_descriptionConfig.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/robotiq_description/cmake/robotiq_descriptionConfig.cmake

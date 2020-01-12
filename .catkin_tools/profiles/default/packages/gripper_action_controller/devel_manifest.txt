@@ -1,0 +1,6 @@
+ros_controllers/gripper_action_controller
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/gripper_action_controller/cmake.lock /home/caio/2_ROS/Doutorado_grasping/devel/./cmake.lock
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/gripper_action_controller/lib/libgripper_action_controller.so /home/caio/2_ROS/Doutorado_grasping/devel/lib/libgripper_action_controller.so
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/gripper_action_controller/lib/pkgconfig/gripper_action_controller.pc /home/caio/2_ROS/Doutorado_grasping/devel/lib/pkgconfig/gripper_action_controller.pc
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/gripper_action_controller/share/gripper_action_controller/cmake/gripper_action_controllerConfig.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/gripper_action_controller/cmake/gripper_action_controllerConfig.cmake
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/gripper_action_controller/share/gripper_action_controller/cmake/gripper_action_controllerConfig-version.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/gripper_action_controller/cmake/gripper_action_controllerConfig-version.cmake

@@ -1,14 +1,58 @@
-Repositório dedicado a pesquisa sobre "robotic grasping" de Caio Viturino.
+Repository created for storing researching about robot grasping. This repository is maintained for backup only. It is not intended to be fully organized (In future versions for sure)
 ------------
-### Usage
+### Test Velocity Control (Usage)
+
+The ur5.launch was modified to not start gazebo while velocity command is still being tested.
+
+`roslaunch ur_gazebo ur5.launch`
+
+For setting up the MoveIt! nodes to allow motion planning run:
+
+`roslaunch ur5_moveit_config ur5_moveit_planning_execution.launch sim:=true`
+
+In order to start RViz with a configuration including the MoveIt! Motion Planning plugin run:
+
+`roslaunch ur5_moveit_config moveit_rviz.launch config:=true`
+
+Start the ur modern drive to connect with URSIM (3.9.1 version) - Remember to set DHCP and check the ip in the terminal. The standard IP is 127.0.1.1 (you should start UR-SIM before launch ur5_ros_contro.launch)
+
+`roslaunch ur_modern_driver ur5_ros_control.launch robot_ip:=127.0.1.1`
+
+Before running the next command, check if joint_group_vel_controller is running by calling:
+
+`rosservice call /controller_manager/list_controllers`
+
+Start the command_vel node in order to check if velocity control is working properly.
+
+`rosrun custom_codes command_vel.py`
 
 First run kinect driver
 `rosrun kinect2_bridge kinect2_bridge depth_method:=opengl reg_method:=cpu`
 
+### Test Computer Vision Tools (Kinect)
+
+Launch kinect driver using iai_kinect2 package
+
+`roslaunch kinect2_bridge kinect2_bridge.launch depth_method:=opengl reg_method:=cpu`
+
+Launch ar_track_alvar
+
+`roslaunch ar_track_alvar pr2_indiv_no_kinect_caio.launch`
+
+Load the Kinect2 TF Frame
+
+`roslaunch custom_codes tf_transforms.launch`
+
+### Connect with real UR5
+
+Use the following command in order to connect with real UR5
+
+`roslaunch ur_modern_driver ur5_bringup.launch robot_ip:=192.168.131.12`
+
 ------------
-### Reunião - 25/11/2019
-Assuntos abordados:
-1. Utilizar, preferencialmente, os dispositivos já presentes no laboratório, como o UR5, Intel Realsense e o Gripper 2-Fingers Robotiq
-2. Verificar como utilizar redes neurais para prever a posição de objetos. Dessa forma, o método proposto seria robusto contra limitações da câmera em relação a proximidade do objeto, ou seja, mesmo que não haja informações de profundidade, a rede neural utilizaria dados passados para prever onde o objeto está no dado momento.
-3. Fazer uma pesquisa bibliográfica em relação à aplicações de grasping.
-4. Traduzir a tese para a língua inglesa
+### Meeting - 25/11/2019
+Topics covered:
+1. Preferably use devices already in the lab, such as UR5, Intel Realsense and Gripper 2-Fingers Robotiq
+2. Check how to use neural networks to predict the position of objects. Thus, the proposed method would be robust against camera limitations regarding the proximity of the object, that is, even if there is no depth information, the neural network would use past data to predict where the object is at the given moment.
+3. Search for grasping applications.
+4. Translate the thesis into English

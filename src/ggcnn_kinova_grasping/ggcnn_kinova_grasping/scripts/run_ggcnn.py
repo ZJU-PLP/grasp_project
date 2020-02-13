@@ -24,7 +24,7 @@ bridge = CvBridge()
 
 
 # Load the Network.
-MODEL_FILE = '/home/caio/2_ROS/Doutorado/src/ggcnn/data/networks/ggcnn_rss/epoch_29_model.hdf5'
+MODEL_FILE = '/home/caio/2_ROS/Doutorado_grasping/src/ggcnn/data/networks/ggcnn_rss/epoch_29_model.hdf5'
 with tf.device('/device:GPU:0'):
     model = load_model(MODEL_FILE)
 
@@ -38,13 +38,15 @@ depth_pub = rospy.Publisher('ggcnn/img/depth', Image, queue_size=1)
 ang_pub = rospy.Publisher('ggcnn/img/ang', Image, queue_size=1)
 cmd_pub = rospy.Publisher('ggcnn/out/command', Float32MultiArray, queue_size=1)
 
-camera_topic_info = '/kinect2/qhd/camera_info'
-camera_topic = '/kinect2/qhd/image_depth_rect'
+# camera_topic_info = '/kinect2/qhd/camera_info'
+# camera_topic = '/kinect2/qhd/image_depth_rect'
+camera_topic_info = '/camera/depth/camera_info'
+camera_topic = '/camera/depth/image_raw'
 
 'FOR TEST'
 depth_pub2 = rospy.Publisher('ggcnn/img/antes', Image, queue_size=1)
 depth_pub3 = rospy.Publisher('ggcnn/img/depois', Image, queue_size=1)
-cmd_test = rospy.Publisher('ggcnn/out/test', Image, queue_size=1)
+# cmd_test = rospy.Publisher('ggcnn/out/test', Image, queue_size=1)
 
 # Initialise some globals.
 prev_mp = np.array([150, 150])
@@ -104,11 +106,10 @@ def depth_callback(depth_message):
     # cada width eh utilizado para calcular o tempo de cada processamento
     with TimeIt('Crop'):
         depth = bridge.imgmsg_to_cv2(depth_message)
-
         # Crop a square out of the middle of the depth and resize it to 300*300
         # Resolution option: option 1 for 480x640, option 2 for 960x540
         crop_size = 400
-        option = 2
+        option = 3
 
         if option:
             height_res = 480
@@ -116,6 +117,14 @@ def depth_callback(depth_message):
         elif option == 2:
             height_res = 540
             width_res = 960
+        elif option == 3:
+            # Area de corte: width -> 440 - 840 // height: 320 - 720
+            height_res = 720 
+            width_res = 1280
+
+        'TESTE - ANTES'
+        antes = copy.deepcopy(depth)
+        depth_pub2.publish(bridge.cv2_to_imgmsg(antes))
 
         # // return the int value of quotient
         # camera size is 480x680 and the default operation crops the image to
@@ -124,7 +133,7 @@ def depth_callback(depth_message):
         # (height_res - crop_size)//2 is used to select the uppermost part of the image
         # if option 1 is chosen then (480 - 400)//2 = 40
         depth_crop = cv2.resize(depth[(height_res - crop_size)//2 + (height_res - crop_size)//2:(height_res - crop_size)//2 + crop_size + (height_res - crop_size)//2,
-                                      (width_res - crop_size)//2:(width_res - crop_size)//2+crop_size],
+                                      (width_res - crop_size + 200)//2:(width_res - crop_size)//2 + crop_size + 200],
                                       (300, 300))
 
         'Tratamento para retirar NaN'
@@ -148,15 +157,13 @@ def depth_callback(depth_message):
         # Ou seja, copia os pixels pretos da imagem e a posicao deles
         mask = (depth_crop == 0).astype(np.uint8)
 
-        # depth_crop = depth_crop / 1000
+        # depth_crop = np.divide(depth_crop, 1000)
 
         # Scale to keep as float, but has to be in bounds -1:1 to keep opencv happy.
         # Copia o maior valor para depois realizar a escala
         depth_scale = np.abs(depth_crop).max()
 
-        'TESTE - ANTES'
-        # antes = copy.deepcopy(depth_crop)
-        # depth_pub2.publish(bridge.cv2_to_imgmsg(antes))
+        print(depth_scale)
 
         # Normalize
         depth_crop = depth_crop.astype(np.float32)/depth_scale  # Has to be float32, 64 not supported.
@@ -187,11 +194,7 @@ def depth_callback(depth_message):
         # The D435 publishes depth in "16-bit unsigned integers in millimeter resolution."
 
         # values smaller than -1 become -1, and values larger than 1 become 1.
-        depth_crop = np.clip((depth_crop - depth_crop.mean()), -0.2, 0.2)
-
-        'TESTE - DEPOIS'
-        # depois = copy.deepcopy(depth_crop)
-        # depth_pub3.publish(bridge.cv2_to_imgmsg(depois))
+        depth_crop = np.clip((depth_crop - depth_crop.mean()), -0.1, 0.1)
 
         with graph.as_default():
             pred_out = model.predict(depth_crop.reshape((1, 300, 300, 1)))

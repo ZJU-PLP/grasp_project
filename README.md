@@ -1,56 +1,211 @@
 Repository created for storing researching about robot grasping. This repository is maintained for backup only. It is not intended to be fully organized (In future versions for sure)
 ------------
-### Test Velocity Control (Usage)
 
-The ur5.launch was modified to not start gazebo while velocity command is still being tested.
+<a id="top"></a>
+### Contents
+1. [Description](#1.0)
+2. [Required packages - Kinetic Version](#2.0)
+3. [Test Velocity Control with RVIZ](#3.0)
+4. [Test Velocity Control with Gazebo and CAM (Gazebo plugin)](#4.0)
+5. [Optional commands (Related to Test Velocity Control)](#5.0)
+6. [Test Computer Vision Tools with Kinect](#6.0)
+7. [Sending commands through the action server](#7.0)
+8. [Connecting with real UR5](#8.0)
+9. [Meetings minutes](#9.0)
 
-`roslaunch ur_gazebo ur5.launch`
+------------
 
-For setting up the MoveIt! nodes to allow motion planning run:
+------------
 
-`roslaunch ur5_moveit_config ur5_moveit_planning_execution.launch sim:=true`
+<a name="1.0"></a>
+### 1.0 Description
 
-In order to start RViz with a configuration including the MoveIt! Motion Planning plugin run:
+This project is related to the application of the Adaptive Artificial Potential Field with ArUco Marker for grasping and collision avoidance using velocity control of ur_modern_driver.
 
-`roslaunch ur5_moveit_config moveit_rviz.launch config:=true`
+Please check the paper for further info: [http://proceedings.science/p/111278]
 
-Start the ur modern drive to connect with URSIM (3.9.1 version) - Remember to set DHCP and check the ip in the terminal. The standard IP is 127.0.1.1 (you should start UR-SIM before launch ur5_ros_contro.launch)
+<a name="2.0"></a>
+### 2.0 Required packages - Kinetic Version
 
-`roslaunch ur_modern_driver ur5_ros_control.launch robot_ip:=127.0.1.1`
+- [LAR Gazebo - Copyright (c) 2019, Erick Suzart Souza. All rights reserved.](https://github.com/ericksuzart/lar_gazebo)
+- [Moveit Kinetic](https://moveit.ros.org/install/)
+- [Moveit Python](https://github.com/mikeferguson/moveit_python)
+- [Robotiq Gripper](https://github.com/crigroup/robotiq)
+- [Universal Robot](https://github.com/ros-industrial/universal_robot)
+- [ur_modern_driver](https://github.com/ros-industrial/ur_modern_driver)
 
-Before running the next command, check if joint_group_vel_controller is running by calling:
+Install any dependencies you might have missed by using this command in catkin_ws folder
+rosdep install --from-paths src --ignore-src -r -y
 
-`rosservice call /controller_manager/list_controllers`
+<a name="3.0"></a>
+### 3.0 Test Velocity Control with RVIZ
 
-Start the command_vel node in order to check if velocity control is working properly.
+RVIZ mode is used when the real robot is connected. In this case, Gazebo will not start.
+Wait for the message "You can start planning now!" to show before running the next command.
 
-`rosrun custom_codes command_vel.py`
+```
+roslaunch custom_codes APF_project_rviz.launch
+```
+> **_NOTE:_**  Remember to start URSIM before launching ur5_ros_control
+Start the ur modern drive to connect with URSIM (3.9.1 version) - Remember to set DHCP and check the ip in the terminal. The IP is 127.0.1.1 as default.
 
-First run kinect driver
-`rosrun kinect2_bridge kinect2_bridge depth_method:=opengl reg_method:=cpu`
+```
+roslaunch custom_codes ur5_ros_control.launch robot_ip:=127.0.1.1
+```
 
-### Test Computer Vision Tools (Kinect)
+If you don't have a webcam connected, launch this:
+
+```
+rosrun custom_codes tf_node.py
+```
+
+Start the command_vel node.
+The following command will turn on orientation control (if desired).
+
+```
+rosrun custom_codes command_vel_rviz.py --armarker --OriON
+```
+
+<a name="4.0"></a>
+### 4.0 Test Velocity Control with Gazebo and CAM (Gazebo plugin)
+
+> **_NOTE:_**  Gazebo simulation is not working properly due to the lack of gravity compensation controller. Velocity controller cannot work well without compensation in Gazebo.
+
+Gazebo simulation is used if the real robot is not available.
+If it is available, please use RVIZ and only RVIZ instead.
+
+> **_NOTE:_** The Gazebo environment is started in paused mode (to set initial joint angles).
+Remember to PLAY the simulation after gazebo starts.
+
+```
+roslaunch custom_codes APF_project_gazebo.launch
+```
+
+Spawn a sphere model to represent the goal
+
+```
+rosrun custom_codes spawn_model.py
+```
+
+While gravity compensation is not yet implement, the gravity is set to zero for the robot to reach the goal.
+The real UR5 has it implemented in its controller. In other words, it is not necessary to have this kind of control when the real robot is connected.
+
+```
+rosrun custom_codes change_gazebo_properties.py
+```
+
+Start rqt_image_view and select /ur5/camera1/image_raw topic to see the image being published
+```
+rqt_image_view
+```
+
+Start the ar_alvar_marker using the webcam topic published by the Gazebo plugin
+
+```
+roslaunch custom_codes gazebo_CAM_alvar.launch
+```
+
+Link the frame published by gazebo_CAM_alvar with the support of the D435 CAM.
+It is done in order to publish fresh tf data when the robot moves (it needs to be further investigated).
+
+```
+atomroslaunch custom_codes tf_transforms.launch gazebo:=true
+```
+
+Start the command_vel node in order to check if velocity control is working properly (check arguments).
+The following command will turn on orientation control (if desired).
+
+```
+rosrun custom_codes command_vel_gazebo.py --armarker --OriON --gazebo
+```
+
+<a name="5.0"></a>
+#### 5.0 Optional commands (Related to Test Velocity Control)
+
+If you want to test velocity control with a dynamic goal published by a node (without Kinect), first run this node before command_vel.py and then run command_vel.py with --dyntest argument.
+
+```
+rosrun custom_codes publish_dynamic_goal.py
+```
+
+If required, check if joint_group_vel_controller is running by calling:
+
+```
+rosservice call /controller_manager/list_controllers
+```
+
+<a name="6.0"></a>
+### 6.0 Test Computer Vision Tools with Kinect
 
 Launch kinect driver using iai_kinect2 package
+Please follow the instruction of iai_kinect2 installation in its default repository [https://github.com/code-iai/iai_kinect2]
 
-`roslaunch kinect2_bridge kinect2_bridge.launch depth_method:=opengl reg_method:=cpu`
+```
+roslaunch custom_codes kinect2_bridge.launch depth_method:=opengl reg_method:=cpu
+```
 
 Launch ar_track_alvar
 
-`roslaunch ar_track_alvar pr2_indiv_no_kinect_caio.launch`
+```
+roslaunch ar_track_alvar Kinect2_alvar.launch
+```
 
 Load the Kinect2 TF Frame
 
-`roslaunch custom_codes tf_transforms.launch`
+```
+roslaunch custom_codes tf_transforms.launch kinect2_test:=true
+```
 
-### Connect with real UR5
+Remember to run command_vel node with --armarker argument
 
-Use the following command in order to connect with real UR5
+<a name="7.0"></a>
+### 7.0 Sending commands through the action server
 
-`roslaunch ur_modern_driver ur5_bringup.launch robot_ip:=192.168.131.12`
+If you want to test the position controller sending commands directly to the /'controller_command'/command topic use
+the following:
 
-------------
-### Meeting - 25/11/2019
+```
+rostopic pub -1 /pos_based_pos_traj_controller/command trajectory_msgs/JointTrajectory "header:
+  seq: 0
+  stamp:
+    secs: 0
+    nsecs: 0
+  frame_id: ''
+joint_names: ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
+points:
+  - positions: [1.57, 0, 0, 0, 0, 0]
+    time_from_start: {secs: 1, nsecs: 0}"
+```
+
+<a name="8.0"></a>
+### 8.0 Connecting with real UR5
+
+Firstly check the machine IP. The IP configured on the robot must have the last digit different.
+
+`ifconfig`
+
+Disable firewall
+
+`sudo ufw disable`
+
+Set up a static IP on UR5 according to the following figure
+
+![config](https://user-images.githubusercontent.com/28100951/71323978-2ca7d380-24b8-11ea-954c-940b009cfd93.jpg)
+
+Set up a connection on Ubuntu according to the following figure
+
+![config_ethernet2](https://user-images.githubusercontent.com/28100951/71323962-fe29f880-24b7-11ea-86dc-756729932de4.jpg)
+
+Use the following command in order to connect with real UR5.
+If you are using velocity control, do not use bring_up. Use ur5_ros_control instead.
+
+```
+roslaunch ur_modern_driver ur5_ros_control.launch robot_ip:=192.168.131.12
+```
+
+<a name="9.0"></a>
+### 9.0 Meetings minutes
+#### Meeting - 25/11/2019
 Topics covered:
 1. Preferably use devices already in the lab, such as UR5, Intel Realsense and Gripper 2-Fingers Robotiq
 2. Check how to use neural networks to predict the position of objects. Thus, the proposed method would be robust against camera limitations regarding the proximity of the object, that is, even if there is no depth information, the neural network would use past data to predict where the object is at the given moment.

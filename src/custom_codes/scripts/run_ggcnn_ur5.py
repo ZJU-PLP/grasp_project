@@ -339,7 +339,6 @@ def depth_callback(depth_message):
                          "object_detected",
                          "camera_depth_optical_frame_rotated")
 
-
 depth_sub = rospy.Subscriber(camera_topic, Image, depth_callback, queue_size=1)
 
 # robot_pos_sub = rospy.Subscriber('/m1n6s200_driver/out/tool_pose', PoseStamped, robot_pos_callback, queue_size=1)

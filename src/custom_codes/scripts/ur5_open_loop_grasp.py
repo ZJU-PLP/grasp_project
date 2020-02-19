@@ -2,7 +2,8 @@
 
 import rospy
 import tf.transformations as tft
-from tf import TransformListener, TransformBroadcaster
+from tf import TransformListener, TransformBroadcaster, TransformerROS
+from tf.transformations import euler_from_quaternion, quaternion_from_euler, euler_from_matrix, quaternion_multiply
 import numpy as np
 
 # import kinova_msgs.msg
@@ -10,12 +11,14 @@ import numpy as np
 import std_msgs.msg
 import std_srvs.srv
 import geometry_msgs.msg
-from moveit_msgs.msg import PositionIKRequest
+# from moveit_msgs.msg import PositionIKRequest
 
 # from helpers.gripper_action_client import set_finger_positions
-from helpers.ur5_position_action_client import position_client, move_to_position
-from helpers.transforms import current_robot_pose, publish_tf_quaterion_as_transform, convert_pose, publish_pose_as_transform
+from ur5_position_action_client import position_client, move_to_position
+# from helpers.transforms import current_robot_pose, publish_tf_quaterion_as_transform, convert_pose, publish_pose_as_transform
 # from helpers.covariance import generate_cartesian_covariance
+
+from ur_inverse_kinematics import *
 
 MOVING = False  # Flag whether the robot is moving under velocity control.
 CURR_Z = 0  # Current end-effector z height.
@@ -153,6 +156,20 @@ def execute_grasp():
 
     return
 
+"""
+Calculate the initial robot position - Used before CPA application
+"""
+def get_ik(pose):
+    matrix = TransformerROS()
+    # The orientation of /tool0 will be constant
+    q = quaternion_from_euler(0, 3.14, 1.57)
+    matrix2 = matrix.fromTranslationRotation((pose[0]*(-1), pose[1]*(-1), pose[2]), (q[0], q[1], q[2], q[3]))
+    th = invKine(matrix2)
+    sol1 = th[:, 2].transpose()
+    joint_values_from_ik = np.array(sol1)
+    joint_values = joint_values_from_ik[0, :]
+    return joint_values.tolist()
+
 
 if __name__ == '__main__':
     global transf
@@ -175,11 +192,12 @@ if __name__ == '__main__':
     # Home position.
     # move_to_position([-0.48, -0.108, 0.431], [0.707, 0.707, 0, 0])
 
+    raw_input("Press enter to home the robot.")
     # move_to_position commands tool0 pose <----
     joint_values = get_ik([-0.4, 0.1, 0.4 + 0.15])
-    goal_position = [-0.48, -0.108, 0.3]
-    goal_orientation = tft.quaternion_from_euler(0.242, 3.14, 1.57) # default orientation
-    move_to_position(goal_position, goal_orientation)
+    # goal_position = [-0.48, -0.108, 0.3]
+    # goal_orientation = tft.quaternion_from_euler(0.242, 3.14, 1.57) # default orientation
+    move_to_position(joint_values)
 
     rospy.sleep(0.5)
 
@@ -190,28 +208,28 @@ if __name__ == '__main__':
     #('Tool0: ', (3.141587635697825, 0.0015925529408822245, 1.5699986721596555))
     # ('Kinect2: ', (2.898080979150797, 0.001592540746445952, 1.5681253599694782))
 
-    grasp_position, grasp_orientation = transf.lookupTransform("base_link", "tool0", rospy.Time(0))
-    grasp_orientation = tft.euler_from_quaternion(grasp_orientation)
-    print("Tool0: ", grasp_orientation)
+    # grasp_position, grasp_orientation = transf.lookupTransform("base_link", "tool0", rospy.Time(0))
+    # grasp_orientation = tft.euler_from_quaternion(grasp_orientation)
+    # print("Tool0: ", grasp_orientation)
 
-    grasp_position, grasp_orientation = transf.lookupTransform("base_link", "kinect2_link", rospy.Time(0))
-    grasp_orientation = tft.euler_from_quaternion(grasp_orientation)
-    print("Kinect2: ", grasp_orientation)
+    # grasp_position, grasp_orientation = transf.lookupTransform("base_link", "kinect2_link", rospy.Time(0))
+    # grasp_orientation = tft.euler_from_quaternion(grasp_orientation)
+    # print("Kinect2: ", grasp_orientation)
 
 
-    while not rospy.is_shutdown():
-    # #
-    # #     rospy.sleep(0.5)
-    # #     set_finger_positions([0, 0])
-    # #     rospy.sleep(0.5)
-    # #
-        raw_input('Press Enter to Start.')
-    # #
-    # #     # start_record_srv(std_srvs.srv.TriggerRequest())
-        # rospy.sleep(0.5)
-        execute_grasp()
-    #     # move_to_position([0, -0.38, 0.25], [0.99, 0, 0, np.sqrt(1-0.99**2)])
-        rospy.sleep(0.5)
-    # #     # stop_record_srv(std_srvs.srv.TriggerRequest())
-    # #
-        raw_input('Press Enter to Complete')
+    # while not rospy.is_shutdown():
+    # # #
+    # # #     rospy.sleep(0.5)
+    # # #     set_finger_positions([0, 0])
+    # # #     rospy.sleep(0.5)
+    # # #
+    #     raw_input('Press Enter to Start.')
+    # # #
+    # # #     # start_record_srv(std_srvs.srv.TriggerRequest())
+    #     # rospy.sleep(0.5)
+    #     execute_grasp()
+    # #     # move_to_position([0, -0.38, 0.25], [0.99, 0, 0, np.sqrt(1-0.99**2)])
+    #     rospy.sleep(0.5)
+    # # #     # stop_record_srv(std_srvs.srv.TriggerRequest())
+    # # #
+    #     raw_input('Press Enter to Complete')

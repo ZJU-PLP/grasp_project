@@ -5,7 +5,7 @@ import time
 import numpy as np
 import tensorflow as tf
 from keras.models import load_model
-from tf import TransformBroadcaster
+from tf import TransformBroadcaster, TransformListener
 
 import cv2
 import scipy.ndimage as ndimage
@@ -20,16 +20,19 @@ from std_msgs.msg import Float32MultiArray
 
 import copy
 
-bridge = CvBridge()
-transf = TransformBroadcaster()
+from tf.transformations import quaternion_from_euler
 
+
+bridge = CvBridge()
 
 # Load the Network.
-MODEL_FILE = '/home/caio/2_ROS/Doutorado_grasping/src/ggcnn/data/networks/ggcnn_rss/epoch_29_model.hdf5'
+MODEL_FILE = '/home/caio/2_ROS/Doutorado_grasping/src/custom_codes/data/epoch_29_model.hdf5'
 with tf.device('/device:GPU:0'):
     model = load_model(MODEL_FILE)
 
 rospy.init_node('ggcnn_detection')
+transf = TransformListener()
+br = TransformBroadcaster()
 
 # Output publishers.
 grasp_pub = rospy.Publisher('ggcnn/img/grasp', Image, queue_size=1)
@@ -97,7 +100,7 @@ def depth_callback(depth_message):
     global prev_mp
     global ROBOT_Z
     global fx, cx, fy, cy
-    global transf
+    global transf, br
 
     # The EOF position should be tracked in real time by depth_callback
     link_pose, _ = transf.lookupTransform("base_link", "grasping_link", rospy.Time(0))
@@ -204,7 +207,7 @@ def depth_callback(depth_message):
         # o depth_crop - depth_crop.mean() fica em torno de 42 a 50 p/ a posicao inicial
         # print("Depth_crop_max: ", depth_crop.max())
         # print("Depth_crop_min: ", depth_crop.min())
-        depth_crop = np.clip((depth_crop - depth_crop.mean()), -1, 1)
+        depth_crop = np.clip((depth_crop - depth_crop.mean()), -2, 2)
         
         'TESTE - DEPOIS'
         depois = copy.deepcopy(depth_crop)
@@ -313,8 +316,29 @@ def depth_callback(depth_message):
 
         # Output the best grasp pose relative to camera.
         cmd_msg = Float32MultiArray()
-        cmd_msg.data = [x, y, z, ang, width]#, depth_center]
+        cmd_msg.data = [x, y, z, ang, width]
+        print("cmd_msg.data: ", cmd_msg.data)
         cmd_pub.publish(cmd_msg)
+
+        # Convert width in pixels to mm.
+        # 0.07 is distance from end effector (CURR_Z) to camera.
+        # 0.1 is approx degrees per pixel for the realsense.
+        g_width = 2 * ((ROBOT_Z + 0.24)) * np.tan(0.1 * cmd_msg.data[-1] / 2.0 / 180.0 * np.pi) * 1000
+        g = min((1 - (min(g_width, 70)/70)) * (6800-4000) + 4000, 5500)
+        print("G_width: ", g_width)
+
+        br.sendTransform((0, 0.02, -0.03), quaternion_from_euler(0.244, 0.0, 0.0),
+                         rospy.Time.now(),
+                         "camera_depth_optical_frame_rotated",
+                         "camera_depth_optical_frame")
+
+        # print("X: %s, Y: %s, Z: %s" % (cmd_msg.data[0]/1000.0, cmd_msg.data[1]/1000.0, cmd_msg.data[2]/1000.0))
+        # -1 pq o frame do object_detected esta invertido
+        br.sendTransform((cmd_msg.data[0]/1000.0, cmd_msg.data[1]/1000.0, cmd_msg.data[2]/1000.0), quaternion_from_euler(0.0, 0.0, -1*cmd_msg.data[3]),
+                         rospy.Time.now(),
+                         "object_detected",
+                         "camera_depth_optical_frame_rotated")
+
 
 depth_sub = rospy.Subscriber(camera_topic, Image, depth_callback, queue_size=1)
 

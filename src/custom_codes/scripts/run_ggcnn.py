@@ -5,7 +5,7 @@ import time
 import numpy as np
 import tensorflow as tf
 from keras.models import load_model
-from tf import TransformBroadcaster
+from tf import TransformBroadcaster, TransformListener
 
 import cv2
 import scipy.ndimage as ndimage
@@ -21,11 +21,11 @@ from std_msgs.msg import Float32MultiArray
 import copy
 
 bridge = CvBridge()
-transf = TransformBroadcaster()
+transf = TransformListener()
 
 
 # Load the Network.
-MODEL_FILE = '/home/caio/2_ROS/Doutorado_grasping/src/ggcnn/data/networks/ggcnn_rss/epoch_29_model.hdf5'
+MODEL_FILE = '/home/caio/2_ROS/Doutorado_grasping/src/custom_codes/data/epoch_29_model.hdf5'
 with tf.device('/device:GPU:0'):
     model = load_model(MODEL_FILE)
 

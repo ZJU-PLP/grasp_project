@@ -1,7 +1,0 @@
-ros_control/combined_robot_hw_tests
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/combined_robot_hw_tests/cmake.lock /home/caio/2_ROS/Doutorado_grasping/devel/./cmake.lock
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/combined_robot_hw_tests/lib/libcombined_robot_hw_tests.so /home/caio/2_ROS/Doutorado_grasping/devel/lib/libcombined_robot_hw_tests.so
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/combined_robot_hw_tests/lib/pkgconfig/combined_robot_hw_tests.pc /home/caio/2_ROS/Doutorado_grasping/devel/lib/pkgconfig/combined_robot_hw_tests.pc
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/combined_robot_hw_tests/lib/combined_robot_hw_tests/combined_robot_hw_dummy_app /home/caio/2_ROS/Doutorado_grasping/devel/lib/combined_robot_hw_tests/combined_robot_hw_dummy_app
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/combined_robot_hw_tests/share/combined_robot_hw_tests/cmake/combined_robot_hw_testsConfig-version.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/combined_robot_hw_tests/cmake/combined_robot_hw_testsConfig-version.cmake
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/combined_robot_hw_tests/share/combined_robot_hw_tests/cmake/combined_robot_hw_testsConfig.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/combined_robot_hw_tests/cmake/combined_robot_hw_testsConfig.cmake

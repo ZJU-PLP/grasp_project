@@ -22,9 +22,9 @@
   <!-- arm -->
   <xacro:ur5_robot prefix="" joint_limited="false" transmission_hw_interface="$(arg transmission_hw_interface)"/>
 
-  <sensor_d435 parent="CAM_support_link">
+  <!-- <sensor_d435 parent="CAM_support_link">
     <origin xyz="-0.0277 -0.002 -0.0075" rpy="0 0 0"/>
-  </sensor_d435>
+  </sensor_d435> -->
   
   <link name="world"/>
 

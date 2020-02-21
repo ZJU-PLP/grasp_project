@@ -1,5 +1,0 @@
-universal_robot/ur10_moveit_config
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/ur10_moveit_config/cmake.lock /home/caio/2_ROS/Doutorado_grasping/devel/./cmake.lock
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/ur10_moveit_config/lib/pkgconfig/ur10_moveit_config.pc /home/caio/2_ROS/Doutorado_grasping/devel/lib/pkgconfig/ur10_moveit_config.pc
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/ur10_moveit_config/share/ur10_moveit_config/cmake/ur10_moveit_configConfig-version.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/ur10_moveit_config/cmake/ur10_moveit_configConfig-version.cmake
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/ur10_moveit_config/share/ur10_moveit_config/cmake/ur10_moveit_configConfig.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/ur10_moveit_config/cmake/ur10_moveit_configConfig.cmake

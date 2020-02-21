@@ -38,6 +38,7 @@ br = TransformBroadcaster()
 grasp_pub = rospy.Publisher('ggcnn/img/grasp', Image, queue_size=1)
 grasp_plain_pub = rospy.Publisher('ggcnn/img/grasp_plain', Image, queue_size=1)
 depth_pub = rospy.Publisher('ggcnn/img/depth', Image, queue_size=1)
+width_pub = rospy.Publisher('ggcnn/img/width', Image, queue_size=1)
 ang_pub = rospy.Publisher('ggcnn/img/ang', Image, queue_size=1)
 cmd_pub = rospy.Publisher('ggcnn/out/command', Float32MultiArray, queue_size=1)
 
@@ -66,7 +67,6 @@ cx = K[2]
 fy = K[4]
 cy = K[5]
 
-
 # Execution Timing
 class TimeIt:
     def __init__(self, s):
@@ -92,7 +92,7 @@ def robot_pos_callback(data):
     global ROBOT_Z
 
     # ROBOT_Z = data.pose.position.z
-    ROBOT_Z = 0.35
+    # ROBOT_Z = 0.35
 
 def depth_callback(depth_message):
     global model
@@ -109,31 +109,15 @@ def depth_callback(depth_message):
     # cada width eh utilizado para calcular o tempo de cada processamento
     with TimeIt('Crop'):
         depth = bridge.imgmsg_to_cv2(depth_message)
-        # Crop a square out of the middle of the depth and resize it to 300*300
-        # Resolution option: option 1 for 480x640, option 2 for 960x540
-        crop_size = 400
-        option = 3
-
-        if option == 1:
-            height_res = 480
-            width_res = 640
-        elif option == 2:
-            height_res = 540
-            width_res = 960
-        elif option == 3:
-            # Area de corte: width -> 440 - 840 // height: 320 - 720
-            height_res = 720 
-            width_res = 1280
+        height_res, width_res = depth.shape
+        
+        crop_size = 300
 
         # // return the int value of quotient
-        # camera size is 480x680 and the default operation crops the image to
-        # height: 40 - 440 e width: 120 - 520
-        # adicionando o space, chegamos a janela para cima, entao o height fica: 80 - 480
-        # (height_res - crop_size)//2 is used to select the uppermost part of the image
-        # if option 1 is chosen then (480 - 400)//2 = 40
-        depth_crop = cv2.resize(depth[0 : crop_size,
-                                      (width_res - crop_size)//2 : (width_res - crop_size)//2 + crop_size],
-                                      (300, 300))
+        # The depth is chosen to be 300x300 
+        # 0 : crop_size because it starts from the top
+        depth_crop = depth[0 : crop_size,
+                           (width_res - crop_size) // 2 : (width_res - crop_size)//2 + crop_size]                           
 
         'Tratamento para retirar NaN'
         # Replace nan with 0 for inpainting.
@@ -154,9 +138,12 @@ def depth_callback(depth_message):
         # se o numero que esta no vetor acima for 0, retorna o numero 1 na mesma posicao (como se fosse True)
         # se depth_crop == 0, retorna 1 como inteiro.
         # Ou seja, copia os pixels pretos da imagem e a posicao deles
-        mask = (depth_crop == 0).astype(np.uint8)
+        mask = np.isnan(depth_crop).astype(np.uint8)
 
-        # depth_crop = np.divide(depth_crop, 1000)
+        kernel = np.ones((3, 3),np.uint8)
+        mask = cv2.dilate(mask, kernel, iterations=1)
+
+        depth_crop[mask==1] = 0
 
         # Scale to keep as float, but has to be in bounds -1:1 to keep opencv happy.
         # Copia o maior valor para depois realizar a escala
@@ -178,7 +165,10 @@ def depth_callback(depth_message):
         # o formato era uint16 antes da transformacao
         # perde alguma informacao?
         depth_crop = depth_crop * depth_scale
-        
+
+    with TimeIt('Resizing'):
+            # Resize
+            depth_crop = cv2.resize(depth_crop, (300, 300), cv2.INTER_AREA)        
         
     # with TimeIt('Calculate Depth'):
         # Figure out roughly the depth in mm of the part between the grippers for collision avoidance.
@@ -207,7 +197,7 @@ def depth_callback(depth_message):
         # o depth_crop - depth_crop.mean() fica em torno de 42 a 50 p/ a posicao inicial
         # print("Depth_crop_max: ", depth_crop.max())
         # print("Depth_crop_min: ", depth_crop.min())
-        depth_crop = np.clip((depth_crop - depth_crop.mean()), -2, 2)
+        depth_crop = np.clip((depth_crop - depth_crop.mean()), -1, 1)
         
         'TESTE - DEPOIS'
         depois = copy.deepcopy(depth_crop)
@@ -236,8 +226,12 @@ def depth_callback(depth_message):
     with TimeIt('Filter'):
         # Filter the outputs
         # Os filtros sao aplicados para aumentar os grasps identificados
-        points_out = ndimage.filters.gaussian_filter(points_out, 5.0)  # 3.0
-        ang_out = ndimage.filters.gaussian_filter(ang_out, 2.0)
+        points_out = ndimage.filters.gaussian_filter(points_out, 2.0)  # 3.0
+        ang_out = ndimage.filters.gaussian_filter(ang_out, 1.0)
+        width_out = ndimage.filters.gaussian_filter(width_out, 1.0)
+
+        # Need to investigate
+        points_out = np.clip(points_out, 0.0, 1.0-1e-3)
 
     with TimeIt('Control'):
         # Calculate the best pose from the camera intrinsics.
@@ -251,6 +245,7 @@ def depth_callback(depth_message):
             # argmax returns max pixel in points_out
             # unravel_index returns the index of that max pixel as coordinates as tuple
             max_pixel = np.array(np.unravel_index(np.argmax(points_out), points_out.shape))
+            print("Max_pixel: ", max_pixel)
             # deve ser a coordenada do max pixel identificado
             prev_mp = max_pixel.astype(np.int)
         else:
@@ -263,19 +258,19 @@ def depth_callback(depth_message):
             # Keep a global copy for next iteration.
             prev_mp = (max_pixel * 0.25 + prev_mp * 0.75).astype(np.int)
 
-        # obtem a coordenada x e y do max_pixel em relacao ao and e width
+        # obtem a coordenada x e y do max_pixel em relacao ao ang e width
         ang = ang_out[max_pixel[0], max_pixel[1]]
         width = width_out[max_pixel[0], max_pixel[1]]
 
         # Convert max_pixel back to uncropped/resized image coordinates in order to do the camera transform.
         # + [(480 - 400) // 2, (680 - 400) // 2]
         # + [40, 140]
-        max_pixel = ((np.array(max_pixel) / 300.0 * crop_size) + np.array([(height_res - crop_size) // 2, (width_res - crop_size) // 2]))
-        max_pixel = np.round(max_pixel).astype(np.int)
+        max_pixel_resized = ((np.array(max_pixel) / 300.0 * crop_size) + np.array([(height_res - crop_size) // 2, (width_res - crop_size) // 2]))
+        max_pixel_resized = np.round(max_pixel).astype(np.int)
 
         # altura do ponto identificado
         # Passa as coordenadas do ponto identificado para a imagem de profundidade obtida em primeira mao no inicio
-        point_depth = depth[max_pixel[0], max_pixel[1]]
+        point_depth = depth[max_pixel_resized[0], max_pixel_resized[1]]
 
         # These magic numbers are my camera intrinsic parameters.
         x = (max_pixel[1] - cx)/(fx) * point_depth
@@ -314,18 +309,24 @@ def depth_callback(depth_message):
         depth_pub.publish(bridge.cv2_to_imgmsg(depth_crop))
         ang_pub.publish(bridge.cv2_to_imgmsg(ang_out))
 
-        # Output the best grasp pose relative to camera.
-        cmd_msg = Float32MultiArray()
-        cmd_msg.data = [x, y, z, ang, width]
-        print("cmd_msg.data: ", cmd_msg.data)
-        cmd_pub.publish(cmd_msg)
-
         # Convert width in pixels to mm.
         # 0.07 is distance from end effector (CURR_Z) to camera.
         # 0.1 is approx degrees per pixel for the realsense.
-        g_width = 2 * ((ROBOT_Z + 0.24)) * np.tan(0.1 * cmd_msg.data[-1] / 2.0 / 180.0 * np.pi) * 1000
-        g = min((1 - (min(g_width, 70)/70)) * (6800-4000) + 4000, 5500)
-        print("G_width: ", g_width)
+        # cmd_msg.data[-1] --> Pixels
+        # g_width = 2 * ((ROBOT_Z + 0.24)) * np.tan(0.1 * cmd_msg.data[-1] / 2.0 / 180.0 * np.pi) * 1000
+        width_m = width_out / 300.0 * 2.0 * depth_crop * np.tan(85.2 * 300 / height_res / 2.0 / 180.0 * np.pi)
+        # max_pixel_2 = np.array(np.unravel_index(np.argmax(width_m), width_m.shape))
+        # print(np.unravel_index(np.argmax(points_out), points_out.shape))
+        width_mm = abs(width_m[max_pixel[0],max_pixel[1]]*1000)
+        print(width_mm)
+
+        # Output the best grasp pose relative to camera.
+        cmd_msg = Float32MultiArray()
+        cmd_msg.data = [x, y, z, ang, width, width_mm]
+        # print("cmd_msg.data: ", cmd_msg.data)
+        cmd_pub.publish(cmd_msg)
+
+        # g = min((1 - (min(g_width, 70)/70)) * (6800-4000) + 4000, 5500)
 
         br.sendTransform((0, 0.02, -0.03), quaternion_from_euler(0.244, 0.0, 0.0),
                          rospy.Time.now(),

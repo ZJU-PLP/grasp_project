@@ -1,5 +1,0 @@
-ros_controllers/forward_command_controller
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/forward_command_controller/cmake.lock /home/caio/2_ROS/Doutorado_grasping/devel/./cmake.lock
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/forward_command_controller/lib/pkgconfig/forward_command_controller.pc /home/caio/2_ROS/Doutorado_grasping/devel/lib/pkgconfig/forward_command_controller.pc
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/forward_command_controller/share/forward_command_controller/cmake/forward_command_controllerConfig.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/forward_command_controller/cmake/forward_command_controllerConfig.cmake
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/forward_command_controller/share/forward_command_controller/cmake/forward_command_controllerConfig-version.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/forward_command_controller/cmake/forward_command_controllerConfig-version.cmake

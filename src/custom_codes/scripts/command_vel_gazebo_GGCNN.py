@@ -263,7 +263,7 @@ class vel_control(object):
 
     def move_to_pos(self, joint_values):
         try:
-            self.goal.trajectory.points = [(JointTrajectoryPoint(positions=joint_values, velocities=[0]*6, time_from_start=rospy.Duration(4.0)))]
+            self.goal.trajectory.points = [(JointTrajectoryPoint(positions=joint_values, velocities=[0]*6, time_from_start=rospy.Duration(15.0)))]
             if not self.all_close(joint_values):
                 # raw_input("==== Press enter to move the robot to the grasp position!")
                 # print "Moving the robot."
@@ -277,81 +277,6 @@ class vel_control(object):
             raise
         except:
             raise
-
-    def convert_pose(self, pose, to_frame, from_frame):
-        """
-        Convert a pose or transform between frames using tf.
-            pose            -> A geometry_msgs.msg/Pose that defines the robots position and orientation in a reference_frame
-            from_frame      -> A string that defines the original reference_frame of the robot
-            to_frame        -> A string that defines the desired reference_frame of the robot to convert to
-        """
-        global tfBuffer, listener
-
-        # Create Listener objet to recieve and buffer transformations
-        trans = None
-
-        # try:
-        trans = self.tf.lookupTransform(to_frame, from_frame, rospy.Time(0))
-        # except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException), e:
-            # print(e)
-            # rospy.logerr('FAILED TO GET TRANSFORM FROM %s to %s' % (to_frame, from_frame))
-            # return None
-
-        spose = PoseStamped()
-        spose.pose = pose
-        spose.header.stamp = rospy.Time().now
-        spose.header.frame_id = from_frame
-
-        # p2 = tf2_geometry_msgs.do_transform_pose(spose, trans)
-        print("spose: ", spose)
-
-        return spose
-
-    def publish_stamped_transform(self, stamped_transform, seconds=1):
-        """
-        Publish a stamped transform for debugging purposes.
-            stamped_transform       -> A geometry_msgs/TransformStamped to be published
-            seconds                 -> An int32 that defines the duration the transform will be broadcast for
-        """
-        # Create broadcast node
-        br = tf2_ros.TransformBroadcaster()
-
-        # Publish once first.
-        stamped_transform.header.stamp = rospy.Time.now()
-        br.sendTransform(stamped_transform)
-
-        # Publish transform for set time.
-        i = 0
-        iterations = seconds/0.05
-        while not rospy.is_shutdown() and i < iterations:
-            stamped_transform.header.stamp = rospy.Time.now()
-            br.sendTransform(stamped_transform)
-            rospy.sleep(0.05)
-            i += 1
-
-    def publish_pose_as_transform(self, pose, reference_frame, name, seconds=1):
-        """
-        Publish a pose as a transform so that it is visualised in rviz.
-        pose                -> A geometry_msgs.msg/Pose to be converted into a transform and published
-        reference_frame     -> A string defining the reference_frame of the pose
-        name                -> A string defining the child frame of the transform
-        seconds             -> An int32 that defines the duration the transform will be broadcast for
-        """
-
-        # Create a broadcast node and a stamped transform to broadcast
-        br = tf2_ros.TransformBroadcaster()
-        t = TransformStamped()
-
-        # Prepare broadcast message
-        t.header.frame_id = reference_frame
-        t.child_frame_id = name
-
-        # Copy in pose values to transform
-        t.transform.translation = pose.position
-        t.transform.rotation = pose.orientation
-
-        # Call the publish_stamped_transform function
-        publish_stamped_transform(t, seconds)
 
     """
     Get forces from APF algorithm
@@ -537,18 +462,23 @@ def main():
     turn_position_controller_on()
 
     # Calculate joint values equivalent to the HOME position
-    joint_values = get_ik([-0.4, -0.11, 0.55])
+    joint_values = get_ik([-0.4, -0.10, 0.65])
     joint_values_grasp = [2.7503889388487677, -1.3631583069981188, 2.079091014654578, -2.357721461467634, -1.6166076458026515, 1.7685985390922419]
 
     ur5_vel = vel_control(arg, joint_values)
     # ur5_vel.joint_values_home = joint_values_ik
 
+    # Stop the robot in case of the node is killed
+    rospy.on_shutdown(ur5_vel.home_pos)
+
     # Send the robot to the custom HOME position
     raw_input("==== Press enter to 'home' the robot!")
     ur5_vel.home_pos()
 
-    # Stop the robot in case of the node is killed
-    rospy.on_shutdown(ur5_vel.home_pos)
+    joint_values = get_ik([-0.4, -0.11, 0.35])
+    raw_input("==== Press enter to 'move' the robot to a new position!")
+    ur5_vel.move_to_pos(joint_values)
+
 
     # In order to properly run the following codes, please run the run_ggcnn_ur5.py node
     ur5_vel.tf.waitForTransform("base_link", "object_detected", rospy.Time(), rospy.Duration(4.0))

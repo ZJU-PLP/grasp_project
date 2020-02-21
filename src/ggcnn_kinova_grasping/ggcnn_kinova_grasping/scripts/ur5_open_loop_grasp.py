@@ -62,7 +62,7 @@ def execute_grasp():
     # Convert width in pixels to mm.
     # 0.07 is distance from end effector (CURR_Z) to camera.
     # 0.1 is approx degrees per pixel for the realsense.
-    # g_width = 2 * ((CURR_Z + 0.07)) * np.tan(0.1 * grip_width / 2.0 / 180.0 * np.pi) * 1000
+    g_width = 2 * ((CURR_Z + 0.07)) * np.tan(0.1 * grip_width / 2.0 / 180.0 * np.pi) * 1000
     # Convert into motor positions.
     # g = min((1 - (min(g_width, 70)/70)) * (6800-4000) + 4000, 5500)
     # set_finger_positions([g, g])

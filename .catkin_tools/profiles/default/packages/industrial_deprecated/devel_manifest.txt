@@ -1,5 +1,0 @@
-industrial_core/industrial_deprecated
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/industrial_deprecated/cmake.lock /home/caio/2_ROS/Doutorado_grasping/devel/./cmake.lock
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/industrial_deprecated/lib/pkgconfig/industrial_deprecated.pc /home/caio/2_ROS/Doutorado_grasping/devel/lib/pkgconfig/industrial_deprecated.pc
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/industrial_deprecated/share/industrial_deprecated/cmake/industrial_deprecatedConfig-version.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/industrial_deprecated/cmake/industrial_deprecatedConfig-version.cmake
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/industrial_deprecated/share/industrial_deprecated/cmake/industrial_deprecatedConfig.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/industrial_deprecated/cmake/industrial_deprecatedConfig.cmake

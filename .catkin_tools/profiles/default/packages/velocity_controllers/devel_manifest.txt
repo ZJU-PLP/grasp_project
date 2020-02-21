@@ -1,6 +1,0 @@
-ros_controllers/velocity_controllers
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/velocity_controllers/cmake.lock /home/caio/2_ROS/Doutorado_grasping/devel/./cmake.lock
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/velocity_controllers/lib/libvelocity_controllers.so /home/caio/2_ROS/Doutorado_grasping/devel/lib/libvelocity_controllers.so
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/velocity_controllers/lib/pkgconfig/velocity_controllers.pc /home/caio/2_ROS/Doutorado_grasping/devel/lib/pkgconfig/velocity_controllers.pc
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/velocity_controllers/share/velocity_controllers/cmake/velocity_controllersConfig.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/velocity_controllers/cmake/velocity_controllersConfig.cmake
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/velocity_controllers/share/velocity_controllers/cmake/velocity_controllersConfig-version.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/velocity_controllers/cmake/velocity_controllersConfig-version.cmake

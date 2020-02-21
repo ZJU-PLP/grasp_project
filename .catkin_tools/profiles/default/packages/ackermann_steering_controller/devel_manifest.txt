@@ -1,7 +1,0 @@
-ros_controllers/ackermann_steering_controller
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/ackermann_steering_controller/cmake.lock /home/caio/2_ROS/Doutorado_grasping/devel/./cmake.lock
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/ackermann_steering_controller/lib/libackermann_steering_controller.so /home/caio/2_ROS/Doutorado_grasping/devel/lib/libackermann_steering_controller.so
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/ackermann_steering_controller/lib/pkgconfig/ackermann_steering_controller.pc /home/caio/2_ROS/Doutorado_grasping/devel/lib/pkgconfig/ackermann_steering_controller.pc
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/ackermann_steering_controller/lib/ackermann_steering_controller/ackermann_steering_controller_ackermann_steering_bot /home/caio/2_ROS/Doutorado_grasping/devel/lib/ackermann_steering_controller/ackermann_steering_controller_ackermann_steering_bot
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/ackermann_steering_controller/share/ackermann_steering_controller/cmake/ackermann_steering_controllerConfig.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/ackermann_steering_controller/cmake/ackermann_steering_controllerConfig.cmake
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/ackermann_steering_controller/share/ackermann_steering_controller/cmake/ackermann_steering_controllerConfig-version.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/ackermann_steering_controller/cmake/ackermann_steering_controllerConfig-version.cmake

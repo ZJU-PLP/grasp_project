@@ -1,4 +1,0 @@
-[ 15%] Built target gtest
-[ 69%] Built target controller_manager_tests
-[ 84%] Built target cm_test
-[100%] Built target dummy_app

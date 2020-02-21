@@ -1,6 +1,0 @@
-ros_control/combined_robot_hw
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/combined_robot_hw/cmake.lock /home/caio/2_ROS/Doutorado_grasping/devel/./cmake.lock
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/combined_robot_hw/lib/libcombined_robot_hw.so /home/caio/2_ROS/Doutorado_grasping/devel/lib/libcombined_robot_hw.so
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/combined_robot_hw/lib/pkgconfig/combined_robot_hw.pc /home/caio/2_ROS/Doutorado_grasping/devel/lib/pkgconfig/combined_robot_hw.pc
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/combined_robot_hw/share/combined_robot_hw/cmake/combined_robot_hwConfig.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/combined_robot_hw/cmake/combined_robot_hwConfig.cmake
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/combined_robot_hw/share/combined_robot_hw/cmake/combined_robot_hwConfig-version.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/combined_robot_hw/cmake/combined_robot_hwConfig-version.cmake

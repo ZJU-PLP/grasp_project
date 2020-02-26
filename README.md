@@ -18,6 +18,8 @@ Repository created to store my research about robot grasping. This repository is
 
 The method used here is based on [GGCNN](https://github.com/dougsm/ggcnn_kinova_grasping) created by Doug Morrison.
 
+> **_NOTE:_**  This package should be placed into your src folder
+
 <a name="2.0"></a>
 ### 2.0 Required packages - Kinetic Version
 

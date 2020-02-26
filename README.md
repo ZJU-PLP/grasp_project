@@ -62,6 +62,25 @@ Packages used:
 - Keras-Preprocessing - 1.1.0 
 - CuDNN - 7.4.2 
 
+#### Easy install
+
+In order to install all the required packages easily, create a catkin workspace folder and then a src inside it.
+```bash
+mkdir ~/catkin_ws_new/src
+```
+
+Clone this repository into the src folder
+```bash
+git clone https://github.com/caiobarrosv/grasp_project
+```
+
+Run the install.sh file
+```bash
+cd ~/catkin_ws_new/src/grasp_project
+sudo chmod +x ./install.sh
+sudo ./install.sh
+```
+
 <a name="3.0"></a>
 ### 3.0 Run GGCNN in Gazebo and RVIZ
 

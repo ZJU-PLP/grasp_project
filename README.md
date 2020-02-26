@@ -47,6 +47,7 @@ rosdep install --from-paths src --ignore-src -r -y
 
 #### System and further required packages:
 Please check the correct version of the cuda based on the Nvidia driver version (https://docs.nvidia.com/deploy/cuda-compatibility/index.html)
+
 Please check the correct version of Tensorflow based on the cuda and CuDNN version (https://www.tensorflow.org/install/source#tested_build_configurations)
 
 Packages used:

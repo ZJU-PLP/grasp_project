@@ -90,6 +90,11 @@ Running this node will move the robot to the position published by the run_ggcnn
 rosrun grasp_project command_GGCNN_ur5.py --OriON --gazebo
 ```
 
+You might want to see the grasp or any other image. In order to do that, you can use the rqt_image_view.
+```bash
+rosrun rqt_image_view
+```
+
 <a name="4.0"></a>
 ### 4.0 Sending commands through the action server
 

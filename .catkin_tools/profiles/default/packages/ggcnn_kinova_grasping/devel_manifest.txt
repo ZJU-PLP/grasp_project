@@ -1,0 +1,5 @@
+ggcnn_kinova_grasping/ggcnn_kinova_grasping
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/ggcnn_kinova_grasping/cmake.lock /home/caio/2_ROS/Doutorado_grasping/devel/./cmake.lock
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/ggcnn_kinova_grasping/lib/pkgconfig/ggcnn_kinova_grasping.pc /home/caio/2_ROS/Doutorado_grasping/devel/lib/pkgconfig/ggcnn_kinova_grasping.pc
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/ggcnn_kinova_grasping/share/ggcnn_kinova_grasping/cmake/ggcnn_kinova_graspingConfig.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/ggcnn_kinova_grasping/cmake/ggcnn_kinova_graspingConfig.cmake
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/ggcnn_kinova_grasping/share/ggcnn_kinova_grasping/cmake/ggcnn_kinova_graspingConfig-version.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/ggcnn_kinova_grasping/cmake/ggcnn_kinova_graspingConfig-version.cmake

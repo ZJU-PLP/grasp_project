@@ -1,0 +1,5 @@
+grasp_project
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/grasp_project/cmake.lock /home/caio/2_ROS/Doutorado_grasping/devel/./cmake.lock
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/grasp_project/lib/pkgconfig/grasp_project.pc /home/caio/2_ROS/Doutorado_grasping/devel/lib/pkgconfig/grasp_project.pc
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/grasp_project/share/grasp_project/cmake/grasp_projectConfig-version.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/grasp_project/cmake/grasp_projectConfig-version.cmake
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/grasp_project/share/grasp_project/cmake/grasp_projectConfig.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/grasp_project/cmake/grasp_projectConfig.cmake

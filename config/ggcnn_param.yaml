@@ -1,0 +1,4 @@
+crop_size: 300
+FOV: 55
+camera_topic_info: "/camera/depth/camera_info"
+camera_topic: "/camera/depth/image_raw"

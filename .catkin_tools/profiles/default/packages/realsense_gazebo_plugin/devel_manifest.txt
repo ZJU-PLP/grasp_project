@@ -1,0 +1,6 @@
+realsense_gazebo_plugin
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/realsense_gazebo_plugin/cmake.lock /home/caio/2_ROS/Doutorado_grasping/devel/./cmake.lock
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/realsense_gazebo_plugin/lib/librealsense_gazebo_plugin.so /home/caio/2_ROS/Doutorado_grasping/devel/lib/librealsense_gazebo_plugin.so
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/realsense_gazebo_plugin/lib/pkgconfig/realsense_gazebo_plugin.pc /home/caio/2_ROS/Doutorado_grasping/devel/lib/pkgconfig/realsense_gazebo_plugin.pc
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/realsense_gazebo_plugin/share/realsense_gazebo_plugin/cmake/realsense_gazebo_pluginConfig-version.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/realsense_gazebo_plugin/cmake/realsense_gazebo_pluginConfig-version.cmake
+/home/caio/2_ROS/Doutorado_grasping/devel/.private/realsense_gazebo_plugin/share/realsense_gazebo_plugin/cmake/realsense_gazebo_pluginConfig.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/realsense_gazebo_plugin/cmake/realsense_gazebo_pluginConfig.cmake

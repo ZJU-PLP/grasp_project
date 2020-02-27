@@ -42,7 +42,7 @@ sudo apt-get install ros-kinetic-gazebo-ros-pkgs ros-kinetic-gazebo-msgs ros-kin
 
 Install any dependencies you might have missed by using this command in catkin_ws folder
 ```bash
-rosdep install --from-paths src --ignore-src -r -y
+rosdep install --from-paths src --ignore-src -r -y --rosdistro kinetic
 ```
 
 #### System and further required packages:

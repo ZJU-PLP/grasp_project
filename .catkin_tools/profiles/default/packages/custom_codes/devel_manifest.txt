@@ -1,5 +1,0 @@
-custom_codes
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/custom_codes/cmake.lock /home/caio/2_ROS/Doutorado_grasping/devel/./cmake.lock
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/custom_codes/lib/pkgconfig/custom_codes.pc /home/caio/2_ROS/Doutorado_grasping/devel/lib/pkgconfig/custom_codes.pc
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/custom_codes/share/custom_codes/cmake/custom_codesConfig-version.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/custom_codes/cmake/custom_codesConfig-version.cmake
-/home/caio/2_ROS/Doutorado_grasping/devel/.private/custom_codes/share/custom_codes/cmake/custom_codesConfig.cmake /home/caio/2_ROS/Doutorado_grasping/devel/share/custom_codes/cmake/custom_codesConfig.cmake

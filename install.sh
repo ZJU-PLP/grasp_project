@@ -21,6 +21,9 @@ cp ../grasp_project/files_to_substitute/CMakeLists.txt ../robotiq/robotiq_descri
 echo '###### Installing ros-kinetic-moveit ######'
 sudo apt-get install ros-kinetic-moveit
 
+echo '###### Installing controllers ######'
+sudo apt-get install ros-kinetic-gripper*controller
+
 echo '###### Cloning the realsense-ros package ######'
 git clone https://github.com/IntelRealSense/realsense-ros ../realsense-ros
 
@@ -31,7 +34,7 @@ cp ../grasp_project/files_to_substitute/RealSensePlugin.cpp ../realsense_gazebo_
 
 # Move into the catkin_ws folder
 cd ../..
-rosdep install --from-paths src --ignore-src -r -y
+rosdep install --from-paths src --ignore-src -r -y --rosdistro kinetic
 catkin build
 
 cd src/realsense_gazebo_plugin
@@ -42,7 +45,7 @@ then
     cmake ../
 	make
 else
-    mkdir build
+    mkdir -p build
     cd build
     cmake ../
 	make
@@ -59,7 +62,7 @@ then
     cmake ../
 	make
 else
-    mkdir build
+    mkdir -p build
     cd build
     cmake ../
     make

@@ -9,9 +9,9 @@ import rosservice
 from std_msgs.msg import Float64MultiArray, MultiArrayDimension, Header, ColorRGBA, Float32MultiArray
 from sensor_msgs.msg import JointState
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryGoal
+from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryGoal, GripperCommandAction, GripperCommandGoal
 from visualization_msgs.msg import Marker
-from geometry_msgs.msg import PoseStamped, Point, Vector3, Pose, TransformStamped
+from geometry_msgs.msg import PoseStamped, Point, Vector3, Pose, TransformStamped, WrenchStamped
 
 from tf import TransformListener, TransformerROS, TransformBroadcaster
 from tf.transformations import euler_from_quaternion, quaternion_from_euler, euler_from_matrix, quaternion_multiply
@@ -26,6 +26,14 @@ from ur_inverse_kinematics import *
 from pyquaternion import Quaternion
 
 # tfBuffer = tf2_ros.Buffer()
+
+MOVE_GRIPPER = False
+CLOSE_GRIPPER_VEL = 0.05
+OPEN_GRIPPER_VEL = -0.05
+STOP_GRIPPER_VEL = 0.0
+MIN_GRASP_ANGLE = 0.1
+MAX_GRASP_ANGLE = 0.70
+STARTED_GRIPPER = False
 
 def parse_args():
     parser = argparse.ArgumentParser(description='AAPF_Orientation')
@@ -44,7 +52,11 @@ def get_ik(pose):
     matrix = TransformerROS()
     # The orientation of /tool0 will be constant
     q = quaternion_from_euler(0, 3.14, 1.57)
-    matrix2 = matrix.fromTranslationRotation((pose[0]*(-1), pose[1]*(-1), pose[2]), (q[0], q[1], q[2], q[3]))
+
+    # The 0.15 accounts for the distance between tool0 and grasping link
+    # The final height will be the set_distance (from base_link)
+    offset = 0.15
+    matrix2 = matrix.fromTranslationRotation((pose[0]*(-1), pose[1]*(-1), pose[2] + offset), (q[0], q[1], q[2], q[3]))
     th = invKine(matrix2)
     sol1 = th[:, 2].transpose()
     joint_values_from_ik = np.array(sol1)
@@ -55,7 +67,7 @@ def turn_velocity_controller_on():
     rosservice.call_service('/controller_manager/switch_controller', [['joint_group_vel_controller'], ['pos_based_pos_traj_controller'], 1])
 
 def turn_position_controller_on():
-    rosservice.call_service('/controller_manager/switch_controller', [['pos_based_pos_traj_controller'], ['joint_group_vel_controller'], 1])
+    rosservice.call_service('/controller_manager/switch_controller', [['pos_based_pos_traj_controller','gripper_controller'], ['joint_group_vel_controller'], 1])
 
 class vel_control(object):
     def __init__(self, args, joint_values):
@@ -91,21 +103,26 @@ class vel_control(object):
         self.pub_vel = rospy.Publisher('/joint_group_vel_controller/command', Float64MultiArray,  queue_size=10)
 
         # Topic used to control the gripper
-        self.griper_pos = rospy.Publisher('/gripper/command', JointTrajectory,  queue_size=10)
-        self.gripper_msg = JointTrajectory()
-        self.gripper_msg.joint_names = ['robotiq_85_left_knuckle_joint']
+        # self.griper_pos = rospy.Publisher('/gripper/command', JointTrajectory,  queue_size=10)
+        # self.gripper_msg = JointTrajectory()
+        # self.gripper_msg.joint_names = ['robotiq_85_left_knuckle_joint']
 
+        # self.gripper_client = actionlib.SimpleActionClient("gripper_controller/gripper_cmd", GripperCommandAction)
+        # rospy.loginfo("Waiting for server (gripper_controller)...")
+        # self.gripper_client.wait_for_server()
+        # rospy.loginfo("Connected to server (gripper_controller)")
+
+        self.joint_vels_gripper = Float64MultiArray()
+        self.pub_vel_gripper = rospy.Publisher('/gripper_controller_vel/command', Float64MultiArray,  queue_size=10)
+
+        self.wrench = rospy.Subscriber('/ft_sensor/raw', WrenchStamped, self.monitor_wrench, queue_size=10)
+        
         # visual tools from moveit
         # self.scene = PlanningSceneInterface("base_link")
         self.marker_publisher = rospy.Publisher('visualization_marker2', Marker, queue_size=10)
 
         # Subscriber used to read joint values
         rospy.Subscriber('/joint_states', JointState, self.ur5_actual_position, queue_size=10)
-
-        # if true, this node receives messages from publish_dynamic_goal.py
-        if self.args.dyntest:
-            # Subscriber used to receive goal coordinates from publish_dynamic_goal.py
-            rospy.Subscriber('/dynamic_goal', Point, self.get_goal_coordinates, queue_size=10)
 
         # actionClient used to send joint positions
         self.client = actionlib.SimpleActionClient('pos_based_pos_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
@@ -177,27 +194,77 @@ class vel_control(object):
         return True
 
     """
-    Close the gripper to the max allowed value
-    """
-    def close_gripper(self):
-        self.gripper_msg.points = [JointTrajectoryPoint(positions=[0.8], velocities=[0], time_from_start=rospy.Duration(0.1))]
-        self.griper_pos.publish(self.gripper_msg)
+    This method monitor the force applied to the gripper
+    """       
+    def monitor_wrench(self, msg):
+        global MOVE_GRIPPER, STARTED_GRIPPER
+
+        # print(msg)
+        if STARTED_GRIPPER:
+            if msg.wrench.force.x < -2 and msg.wrench.force.x > 2:
+                MOVE_GRIPPER = False
+                print("Gripper Stopped!")
+
+    def gripper_init(self):
+        if self.robotic > 0.6:
+            gripper_vel = OPEN_GRIPPER_VEL
+        else:
+            gripper_vel = CLOSE_GRIPPER_VEL
+
+        self.joint_vels_gripper.data = np.array([gripper_vel])
+        self.pub_vel_gripper.publish(self.joint_vels_gripper)
+
+        rate = rospy.Rate(125)
+        rospy.loginfo("Moving the gripper! Please wait...")
+        while not rospy.is_shutdown() and MOVE_GRIPPER:
+            rate.sleep()
+            if gripper_vel == OPEN_GRIPPER_VEL:
+                if self.robotic < 0.2:
+                    print ("Gripper opened!")
+                    break
+            else:
+                if self.robotic > 0.7:
+                    print ("Gripper closed!")
+                    break
+
+        self.joint_vels_gripper.data = np.array([0.0])
+        self.pub_vel_gripper.publish(self.joint_vels_gripper)
 
     """
-    Close the gripper to a specific pose
+    Control the gripper by using velocity controller
     """
-    def close_gripper_width_to_angle(self, pose):
-        self.gripper_msg.points = [JointTrajectoryPoint(positions=[pose], velocities=[0], time_from_start=rospy.Duration(0.1))]
-        self.griper_pos.publish(self.gripper_msg)
+    def gripper_vel_control_close(self):
+        global MOVE_GRIPPER
+
+        rate = rospy.Rate(125)
+        self.joint_vels_gripper.data = np.array([CLOSE_GRIPPER_VEL])
+        self.pub_vel_gripper.publish(self.joint_vels_gripper)
+
+        while not rospy.is_shutdown() and MOVE_GRIPPER and self.robotic < 0.7:
+            rate.sleep()
+           
+        # stops the robot after the goal is reached
+        self.joint_vels_gripper.data = np.array([0.0])
+        self.pub_vel_gripper.publish(self.joint_vels_gripper)
+
 
     """
-    Open the gripper to the max allowed value
+    Control the gripper by using velocity controller
     """
-    def open_gripper(self):
-        self.gripper_msg.points = [JointTrajectoryPoint(positions=[0.0], velocities=[0], time_from_start=rospy.Duration(1.0))]
-        self.griper_pos.publish(self.gripper_msg)
+    def gripper_vel_control_open(self):
+        global MOVE_GRIPPER
 
-   
+        rate = rospy.Rate(125)
+        self.joint_vels_gripper.data = np.array([OPEN_GRIPPER_VEL])
+        self.pub_vel_gripper.publish(self.joint_vels_gripper)
+
+        while not rospy.is_shutdown() and MOVE_GRIPPER and self.robotic > 0.1:            
+            rate.sleep()
+           
+        # stops the robot after the goal is reached
+        self.joint_vels_gripper.data = np.array([0.0])
+        self.pub_vel_gripper.publish(self.joint_vels_gripper)
+
     """
     The joint states published by /joint_staes of the UR5 robot are in wrong order.
     /joint_states topic normally publishes the joint in the following order:
@@ -206,23 +273,14 @@ class vel_control(object):
     ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
     """
     def ur5_actual_position(self, joint_values_from_ur5):
-        # rospy.loginfo(joint_values_from_ur5)
         if self.args.gazebo:
             self.th3, self.robotic, self.th2, self.th1, self.th4, self.th5, self.th6 = joint_values_from_ur5.position
+            # print("Robotic angle: ", self.robotic)
         else:
             self.th3, self.th2, self.th1, self.th4, self.th5, self.th6 = joint_values_from_ur5.position
         self.actual_position = [self.th1, self.th2, self.th3, self.th4, self.th5, self.th6]
 
-    """
-    When to node /dynamic_goal from publish_dynamic_goal.py is used instead of Markers, this
-    function is responsible for getting the coordinates published by the node and save it
-    as attribute of the class
-    """
-    def get_goal_coordinates(self, goal_coordinates):
-        self.ptFinal = [goal_coordinates.x, goal_coordinates.y, goal_coordinates.z]
-        self.add_sphere(self.ptFinal, self.diam_goal, ColorRGBA(0.0, 1.0, 0.0, 1.0))
-
-
+  
     """
     Send the HOME position to the robot
     self.client.wait_for_result() does not work well.
@@ -448,28 +506,31 @@ class vel_control(object):
 
 
 def main():
+    global MOVE_GRIPPER, STARTED_GRIPPER
+
     arg = parse_args()
 
     # Turn position controller ON
     turn_position_controller_on()
 
     # Calculate joint values equivalent to the HOME position
-    # The 0.15 accounts for the distance between tool0 and grasping link
-    # The final height will be the set_distance (from base_link)
-    offset = 0.15
-    set_distance = 0.35
-    joint_values = get_ik([-0.4, -0.10, set_distance + offset])
+    joint_values = get_ik([-0.4, -0.10, 0.35])
     
     ur5_vel = vel_control(arg, joint_values)
     
+
     # Stop the robot in case of the node is killed
     rospy.on_shutdown(ur5_vel.home_pos)
 
     # Send the robot to the custom HOME position
+    
     raw_input("==== Press enter to 'home' the robot and open gripper!")
     ur5_vel.home_pos()
-    ur5_vel.open_gripper()
     
+    MOVE_GRIPPER = True
+    STARTED_GRIPPER = True
+    ur5_vel.gripper_init()
+        
     msg = rospy.wait_for_message('/ggcnn/out/command', Float32MultiArray)
     ur5_vel.tf.waitForTransform("base_link", "object_detected", rospy.Time(), rospy.Duration(4.0))
     d = list(msg.data)
@@ -480,16 +541,19 @@ def main():
     # gripper_pose = int(np.clip((13.-230.)/0.087 * d[-1] + 230., 0, 255))
     # percent = 0.087 * pose / 255
 
+    # print(posCB)
+
     ur5_vel.add_sphere([posCB[0], posCB[1], posCB[2]], 0.05, ColorRGBA(0.0, 1.0, 0.0, 1.0))
-    joint_values = get_ik([posCB[0], posCB[1], posCB[2] + 0.25])
-    print("Ori: ", ori[-1] * 180 / np.pi)
+    joint_values = get_ik([posCB[0], posCB[1], posCB[2]])
+    # print("Ori: ", ori[-1] * 180 / np.pi)
     joint_values[-1] = ori[-1] 
-    print(joint_values[-1] * 180 / np.pi)
+    
     raw_input("==== Press enter to move the robot to the goal position!")
     ur5_vel.move_to_pos(joint_values)
 
-    # raw_input("==== Press enter to close the gripper!")
-    # ur5_vel.close_gripper_width_to_angle(percent)
+    raw_input("==== Press enter to close the gripper!")
+    MOVE_GRIPPER = True    
+    ur5_vel.gripper_vel_control_close()
 
     # After this raw_input, the rospy.on_shutdown will be called
     raw_input("==== Press enter to 'home' the robot!")

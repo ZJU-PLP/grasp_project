@@ -29,8 +29,9 @@
   <node name="spawn_robot"
         pkg="gazebo_ros"
         type="spawn_model"
-        args="-urdf
-              -param robot_description
+        args="-param robot_description
+              -urdf
+              -model robot
               -x 0
               -y 0
               -z 0.01
@@ -40,8 +41,7 @@
               -J shoulder_pan_joint 0.0
               -J wrist_1_joint -1.5707
               -J wrist_2_joint 0.0
-              -J wrist_3_joint 0.0
-              -model robot"
+              -J wrist_3_joint 0.0"
         respawn="false"
         output="screen" />
 
@@ -55,10 +55,13 @@
   <node name="gripper_controller_spawner"
         pkg="controller_manager"
         type="spawner"
-        args="gripper"/>
+        args="gripper_controller_vel"/>
 
-  <!-- Load UR5 Controllers -->
-  <!-- load velocity and position controllers -->
+  
+  #######################################
+  # Load UR5 Controllers
+  # load velocity and position controllers
+  ########################################
   <rosparam file="$(find grasp_project)/controller/ur5_controllers.yaml"
             command="load"/>
 

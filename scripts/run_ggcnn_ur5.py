@@ -247,7 +247,9 @@ def depth_callback(depth_message):
         depth_with_square.publish(bridge.cv2_to_imgmsg(depth_crop_copy))
 
         # Get the max_pixel height
-        point_depth = depth[max_pixel[0], max_pixel[1]]
+        # Offset is used to sync the object position and cam feedback
+        offset_mm = 40
+        point_depth = depth[max_pixel[0], max_pixel[1]] - offset_mm
 
         ang = ang + np.pi/2
         print("\n")

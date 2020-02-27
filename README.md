@@ -66,11 +66,12 @@ Packages used:
 
 In order to install all the required packages easily, create a catkin workspace folder and then a src inside it.
 ```bash
-mkdir ~/catkin_ws_new/src
+mkdir -p ~/catkin_ws_new/src
 ```
 
 Clone this repository into the src folder
 ```bash
+cd ~/catkin_ws_new/src
 git clone https://github.com/caiobarrosv/grasp_project
 ```
 

@@ -248,7 +248,7 @@ def depth_callback(depth_message):
 
         # Get the max_pixel height
         # Offset is used to sync the object position and cam feedback
-        offset_mm = 40
+        offset_mm = 45
         point_depth = depth[max_pixel[0], max_pixel[1]] - offset_mm
 
         ang = ang + np.pi/2

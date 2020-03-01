@@ -37,7 +37,7 @@ OPEN_GRIPPER_VEL = -0.1
 STOP_GRIPPER_VEL = 0.0
 MIN_GRASP_ANGLE = 0.1
 MAX_GRASP_ANGLE = 0.70
-STARTED_GRIPPER = True
+STARTED_GRIPPER = False
 CONTACT = False
 
 def parse_args():
@@ -212,22 +212,20 @@ class vel_control(object):
 
         # print(msg)
         if STARTED_GRIPPER:
-            if float(msg.wrench.force.x) < -2.0 or float(msg.wrench.force.x) > 2.0:
+            if float(msg.wrench.force.x) < -2.0 or float(msg.wrench.force.x) > 2.0 or \
+               float(msg.wrench.force.y) < -5.0 or float(msg.wrench.force.y) > 15.0 or \
+               float(msg.wrench.force.z) < -4.0 or float(msg.wrench.force.z) > 5.0:
                 MOVE_GRIPPER = False
                 CONTACT = True
-                
-            if float(msg.wrench.force.y) < -5.0 or float(msg.wrench.force.y) > 15.0:
-                MOVE_GRIPPER = False
-                CONTACT = True
-                
-            if float(msg.wrench.force.z) < -4.0 or float(msg.wrench.force.z) > 5.0:
-                MOVE_GRIPPER = False
-                CONTACT = True
+
+        print("Move? ", MOVE_GRIPPER)
 
     def monitor_contacts(self, msg):
         print(msg)
                 
     def gripper_init(self):
+        global MOVE_GRIPPER
+
         if self.robotic > 0.5:
             gripper_vel = OPEN_GRIPPER_VEL
         else:
@@ -277,6 +275,8 @@ class vel_control(object):
         self.joint_vels_gripper.data = np.array([CLOSE_GRIPPER_VEL])
         self.pub_vel_gripper.publish(self.joint_vels_gripper)
 
+        print(self.robotic)
+
         while not rospy.is_shutdown() and MOVE_GRIPPER and self.robotic < 0.7:
             print(MOVE_GRIPPER)
             rate.sleep()
@@ -297,8 +297,10 @@ class vel_control(object):
         rate = rospy.Rate(125)
         self.joint_vels_gripper.data = np.array([OPEN_GRIPPER_VEL])
         self.pub_vel_gripper.publish(self.joint_vels_gripper)
+        print(self.robotic)
+        print(MOVE_GRIPPER)
 
-        while not rospy.is_shutdown() and MOVE_GRIPPER and self.robotic > 0.1:            
+        while not rospy.is_shutdown() and MOVE_GRIPPER and self.robotic > 0.1:
             rate.sleep()
            
         # stops the robot after the goal is reached
@@ -331,7 +333,7 @@ class vel_control(object):
     def home_pos(self):
         turn_position_controller_on()
         rospy.sleep(0.1)
-        self.gripper_vel_control_open()
+        self.gripper_init()
 
         # First point is current position
         try:
@@ -568,8 +570,10 @@ def main():
     
     raw_input("==== Press enter to 'home' the robot and open gripper!")
     ur5_vel.home_pos()
-    ur5_vel.gripper_init()
-        
+
+    # Start monitoring gripper torques after it initiates
+    STARTED_GRIPPER = True
+
     msg = rospy.wait_for_message('/ggcnn/out/command', Float32MultiArray)
     ur5_vel.tf.waitForTransform("base_link", "object_detected", rospy.Time(), rospy.Duration(4.0))
     d = list(msg.data)
@@ -587,11 +591,11 @@ def main():
     # print("Ori: ", ori[-1] * 180 / np.pi)
     joint_values[-1] = ori[-1] 
 
-    raw_input("==== Press enter to change the object position!")
-    ur5_vel.set_model_pose_gazebo()
+    # raw_input("==== Press enter to change the object position!")
+    # ur5_vel.set_model_pose_gazebo()
     
-    raw_input("==== Press enter to move the robot to the goal position!")
-    ur5_vel.move_to_pos(joint_values)
+    # raw_input("==== Press enter to move the robot to the goal position!")
+    # ur5_vel.move_to_pos(joint_values)
 
     raw_input("==== Press enter to close the gripper!")
     ur5_vel.gripper_vel_control_close()
@@ -600,7 +604,7 @@ def main():
     raw_input("==== Press enter to 'home' the robot!")
     ur5_vel.home_pos()
 
-    raw_input("==== Press enter to close the gripper!")
+    raw_input("==== Press enter to open the gripper!")
     MOVE_GRIPPER = True    
     ur5_vel.gripper_vel_control_open()
 

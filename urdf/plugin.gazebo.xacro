@@ -91,7 +91,7 @@
   </gazebo>
 
   <!-- camera -->
-  <gazebo reference="CAM_support_link">
+  <!-- <gazebo reference="CAM_support_link">
     <sensor type="camera" name="camera1">
       <update_rate>30.0</update_rate>
       <camera name="head">
@@ -106,11 +106,11 @@
           <far>300</far>
         </clip>
         <noise>
-          <type>gaussian</type>
+          <type>gaussian</type> -->
           <!-- Noise is sampled independently per pixel on each frame.
                That pixel's noise value is added to each of its color
                channels, which at that point lie in the range [0,1]. -->
-          <mean>0.0</mean>
+          <!-- <mean>0.0</mean>
           <stddev>0.007</stddev>
         </noise>
       </camera>
@@ -129,7 +129,7 @@
         <distortionT2>0.0</distortionT2>
       </plugin>
     </sensor>
-  </gazebo>
+  </gazebo> -->
 
 
 

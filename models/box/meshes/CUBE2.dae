@@ -106,7 +106,7 @@
   </library_effects>
   <library_images>
     <image id="marker" name="marker">
-      <init_from>marker.png</init_from>
+      <init_from>box.png</init_from>
     </image>
   </library_images>
   <library_materials>

@@ -79,13 +79,14 @@ Run the install.sh file
 ```bash
 cd ~/catkin_ws_new/src/grasp_project
 sudo chmod +x ./install.sh
-sudo ./install.sh
+./install.sh #without sudo
 ```
 
 <a name="3.0"></a>
 ### 3.0 Run GGCNN in Gazebo and RVIZ
 
 Launch Gazebo first:
+obs: The robot may not start correctly due to a hack method used to set initial joint positions in gazebo as mentioned in this [issue](https://github.com/ros-simulation/gazebo_ros_pkgs/issues/93#). If it happens, try to restart gazebo.
 ```bash
 roslaunch grasp_project gazebo_ur5.launch
 ```

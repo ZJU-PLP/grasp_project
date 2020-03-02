@@ -4,7 +4,7 @@
 import rospy
 import tf
 import rospkg
-from gazebo_msgs.srv import SpawnModel, GetModelState
+from gazebo_msgs.srv import SpawnModel, GetModelState, GetLinkState
 import time
 from geometry_msgs.msg import *
 from gazebo_msgs.msg import ModelState, ModelStates
@@ -43,7 +43,7 @@ class Moving():
     def moving_goal(self):
         obstacle = ModelState()
         ptFinal, oriFinal = tf.lookupTransform("base_link", "ar_marker_0", rospy.Time(0))
-        obstacle.model_name = self.model_name
+        obstacle.model_name = "custom_box"
         obstacle.pose = model.pose[i]
         obstacle.twist = Twist()
         obstacle.twist.linear.y = 1.3
@@ -75,10 +75,11 @@ def main():
     moving1 = Moving("table", Spawning1, ptFinal[0], ptFinal[1], ptFinal[2], oriFinal, path_table)
     moving1.spawning()
 
-    ptFinal = [0.0, -0.4, 0.0]    
+    ptFinal = [0.1, -0.55, 0.0]    
     oriFinal = quaternion_from_euler(0.0, 0.0, 0.7)
     moving2 = Moving("custom_box", Spawning1, x_position + ptFinal[0], y_position + ptFinal[1], z_position + ptFinal[2], oriFinal, path_box)
     moving2.spawning()
 
+    
 if __name__ == '__main__':
     main()

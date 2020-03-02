@@ -7,11 +7,9 @@ pip install Keras-Applications==1.0.8
 pip install Keras-Preprocessing==1.1.0 
 pip install matplotlib==2.2.4 
 pip install scikit-image==0.14.5 
-pip install tensorboard==1.14.0 
-pip install tensorflow-estimator==1.14.0 
-pip install tensorflow-gpu==1.14.0 
-pip install tensorflow-tensorboard==0.4.0 
 pip install pathlib
+pip install h5py==2.10.0
+pip install tensorflow-gpu==1.14.0
 
 # Install catkin tools
 sudo apt-get install ros-kinetic-catkin python-catkin-tools

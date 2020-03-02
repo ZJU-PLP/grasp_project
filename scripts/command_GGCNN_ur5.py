@@ -14,8 +14,8 @@ from visualization_msgs.msg import Marker
 from geometry_msgs.msg import PoseStamped, Point, Vector3, Pose, TransformStamped, WrenchStamped
 
 # Gazebo
-from gazebo_msgs.msg import ModelState, ModelStates, ContactState
-from gazebo_msgs.srv import GetModelState
+from gazebo_msgs.msg import ModelState, ModelStates, ContactState, LinkState
+from gazebo_msgs.srv import GetModelState, GetLinkState
 
 from tf import TransformListener, TransformerROS, TransformBroadcaster
 from tf.transformations import euler_from_quaternion, quaternion_from_euler, euler_from_matrix, quaternion_multiply
@@ -39,6 +39,10 @@ MIN_GRASP_ANGLE = 0.1
 MAX_GRASP_ANGLE = 0.70
 STARTED_GRIPPER = False
 CONTACT = False
+MAX_OPEN_INIT = 0.15
+MAX_CLOSE_INIT = 0.10
+GRIPPER_INIT = True
+# GRASPING = True # False
 
 def parse_args():
     parser = argparse.ArgumentParser(description='AAPF_Orientation')
@@ -120,8 +124,6 @@ class vel_control(object):
         self.joint_vels_gripper = Float64MultiArray()
         self.pub_vel_gripper = rospy.Publisher('/gripper_controller_vel/command', Float64MultiArray,  queue_size=10)
 
-        self.wrench = rospy.Subscriber('/ft_sensor/raw', WrenchStamped, self.monitor_wrench, queue_size=10)
-        
         # visual tools from moveit
         # self.scene = PlanningSceneInterface("base_link")
         self.marker_publisher = rospy.Publisher('visualization_marker2', Marker, queue_size=10)
@@ -137,10 +139,11 @@ class vel_control(object):
         rospy.sleep(1)
 
         # Gazebo topics
-        self.pub_model = rospy.Publisher('gazebo/set_model_state', ModelState, queue_size=1)
+        self.pub_model = rospy.Publisher('/gazebo/set_link_state', LinkState, queue_size=10)
         self.model = rospy.wait_for_message('gazebo/model_states', ModelStates)
-        self.model_coordinates = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)
-        self.model_contacts = rospy.Subscriber('/gazebo/default/robot/contacts', ContactState, self.monitor_contacts, queue_size=10)
+        self.model_coordinates = rospy.ServiceProxy( '/gazebo/get_link_state', GetLinkState)
+        self.wrench = rospy.Subscriber('/ft_sensor/raw', WrenchStamped, self.monitor_wrench, queue_size=10)
+        # self.model_contacts = rospy.Subscriber('/gazebo/default/physics/contacts', ContactState, self.monitor_contacts, queue_size=10)
 
         # Standard attributes used to send joint position commands
         self.joint_vels = Float64MultiArray()
@@ -208,7 +211,7 @@ class vel_control(object):
     This method monitor the force applied to the gripper
     """       
     def monitor_wrench(self, msg):
-        global MOVE_GRIPPER, STARTED_GRIPPER, CONTACT
+        global MOVE_GRIPPER, STARTED_GRIPPER, CONTACT, GRASPING
 
         # print(msg)
         if STARTED_GRIPPER:
@@ -218,13 +221,29 @@ class vel_control(object):
                 MOVE_GRIPPER = False
                 CONTACT = True
 
-    def monitor_contacts(self, msg):
-        print(msg)
+        # rate = rospy.Rate(60)
+        # if GRASPING:
+
+        #     object_coordinates_box = self.model_coordinates("robotiq_85_left_finger_tip_link", "base_link")
+        #     z_position_box = object_coordinates_box.link_state.pose.position.z
+        #     y_position_box = object_coordinates_box.link_state.pose.position.y
+        #     x_position_box = object_coordinates_box.link_state.pose.position.x
                 
+        #     print "X, Y, Z: ", x_position_box, y_position_box, z_position_box
+
+        #     obstacle = LinkState()
+        #     obstacle.link_name = "box_link"
+        #     obstacle.pose.position = Point(x_position_box, y_position_box, z_position_box)
+        #     obstacle.reference_frame = "wrist_3_link"
+        #     self.pub_model.publish(obstacle)
+        #     rate.sleep()
+            
     def gripper_init(self):
         global MOVE_GRIPPER
+        global CLOSE_GRIPPER_VEL, OPEN_GRIPPER_VEL
+        global MAX_OPEN_INIT, MAX_CLOSE_INIT
 
-        if self.robotic > 0.5:
+        if self.robotic > MAX_OPEN_INIT:
             gripper_vel = OPEN_GRIPPER_VEL
         else:
             gripper_vel = CLOSE_GRIPPER_VEL
@@ -233,35 +252,19 @@ class vel_control(object):
         self.pub_vel_gripper.publish(self.joint_vels_gripper)
 
         rate = rospy.Rate(125)
-        rospy.loginfo("Moving the gripper! Please wait...")
-        while not rospy.is_shutdown() and MOVE_GRIPPER:
+        rospy.loginfo("Starting the gripper! Please wait...")
+        while not rospy.is_shutdown():
             rate.sleep()
             if gripper_vel == OPEN_GRIPPER_VEL:
-                if self.robotic < 0.1:
+                if self.robotic < MAX_CLOSE_INIT:
                     break
             else:
-                if self.robotic > 0.2:
+                if self.robotic > MAX_OPEN_INIT:
                     break
 
         self.joint_vels_gripper.data = np.array([0.0])
         self.pub_vel_gripper.publish(self.joint_vels_gripper)
-
-    # Not used yet
-    def set_model_pose_gazebo(self):
-        obstacle = ModelState()
-        # ptFinal, oriFinal = self.tf.lookupTransform("grasping_link", "base_link", rospy.Time(0))
-        
-        for i in range(len(self.model.name)):
-            if self.model.name[i] == 'custom_box2':
-                object_coordinates = self.model_coordinates("custom_box2", "")
-                z_position = object_coordinates.pose.position.z
-                y_position = object_coordinates.pose.position.y
-                x_position = object_coordinates.pose.position.x
-                obstacle.model_name = "custom_box2"
-                obstacle.pose = self.model.pose[i]
-                obstacle.pose.position.x = float(x_position)
-                obstacle.pose.position.y = float(y_position)
-                self.pub_model.publish(obstacle)
+        rospy.loginfo("Gripper started!")
 
     """
     Control the gripper by using velocity controller
@@ -273,10 +276,7 @@ class vel_control(object):
         self.joint_vels_gripper.data = np.array([CLOSE_GRIPPER_VEL])
         self.pub_vel_gripper.publish(self.joint_vels_gripper)
 
-        print(self.robotic)
-
-        while not rospy.is_shutdown() and MOVE_GRIPPER and self.robotic < 0.7:
-            print(MOVE_GRIPPER)
+        while not rospy.is_shutdown() and MOVE_GRIPPER and self.robotic < 0.6:
             rate.sleep()
 
         # stops the robot after the goal is reached
@@ -295,9 +295,7 @@ class vel_control(object):
         rate = rospy.Rate(125)
         self.joint_vels_gripper.data = np.array([OPEN_GRIPPER_VEL])
         self.pub_vel_gripper.publish(self.joint_vels_gripper)
-        print(self.robotic)
-        print(MOVE_GRIPPER)
-
+        
         while not rospy.is_shutdown() and MOVE_GRIPPER and self.robotic > 0.1:
             rate.sleep()
            
@@ -324,14 +322,19 @@ class vel_control(object):
   
     """
     Send the HOME position to the robot
-    self.client.wait_for_result() does not work well.
+    self.client.wait_for_result() won't work well.
     Instead, a while loop has been created to ensure that the robot reaches the
     goal even after the failure.
+    In order to avoid the gripper to keep moving after the node is killed, the method gripper_init() is also called
     """
     def home_pos(self):
+        global GRIPPER_INIT
+
         turn_position_controller_on()
         rospy.sleep(0.1)
-        self.gripper_init()
+
+        if GRIPPER_INIT:
+            self.gripper_init()
 
         # First point is current position
         try:
@@ -370,7 +373,7 @@ class vel_control(object):
             raise
 
 def main():
-    global MOVE_GRIPPER, STARTED_GRIPPER
+    global MOVE_GRIPPER, STARTED_GRIPPER, GRIPPER_INIT, GRASPING
 
     arg = parse_args()
 
@@ -390,9 +393,8 @@ def main():
     
     raw_input("==== Press enter to 'home' the robot and open gripper!")
     ur5_vel.home_pos()
-
-    # Start monitoring gripper torques after it initiates
-    STARTED_GRIPPER = True
+    ur5_vel.gripper_init()
+    GRIPPER_INIT = False
 
     msg = rospy.wait_for_message('/ggcnn/out/command', Float32MultiArray)
     ur5_vel.tf.waitForTransform("base_link", "object_detected", rospy.Time(), rospy.Duration(4.0))
@@ -410,15 +412,16 @@ def main():
     joint_values = get_ik([posCB[0], posCB[1], posCB[2]])
     # print("Ori: ", ori[-1] * 180 / np.pi)
     joint_values[-1] = ori[-1] 
-
-    # raw_input("==== Press enter to change the object position!")
-    # ur5_vel.set_model_pose_gazebo()
     
-    # raw_input("==== Press enter to move the robot to the goal position!")
-    # ur5_vel.move_to_pos(joint_values)
+    raw_input("==== Press enter to move the robot to the goal position!")
+    ur5_vel.move_to_pos(joint_values)
+
+    # Start monitoring gripper torques
+    STARTED_GRIPPER = True
 
     raw_input("==== Press enter to close the gripper!")
-    ur5_vel.gripper_vel_control_close()
+    # GRASPING = True
+    ur5_vel.gripper_vel_control_close()    
 
     # After this raw_input, the rospy.on_shutdown will be called
     raw_input("==== Press enter to 'home' the robot!")

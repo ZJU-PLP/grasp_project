@@ -14,16 +14,15 @@ from pathlib import Path
 from tf import TransformListener
 from tf.transformations import quaternion_from_euler
 
-rospack = rospkg.RosPack()
-Home = rospack.get_path('grasp_project')
-path = Home + '/models/box/model.sdf'
+
 
 
 class Moving():
-    def __init__(self, model_name, Spawning1, y_pose, x_pose, z_pose, oriFinal):
+    def __init__(self, model_name, Spawning1, y_pose, x_pose, z_pose, oriFinal, path):
         self.pub_model = rospy.Publisher('gazebo/set_model_state', ModelState, queue_size=1)
         self.model_name = model_name
         self.rate = rospy.Rate(10)
+        self.path = path
         self.x_model_pose = x_pose
         self.y_model_pose = y_pose
         self.z_model_pose = z_pose
@@ -31,7 +30,7 @@ class Moving():
         self.orientation = oriFinal
 
     def spawning(self,):
-		with open(path) as f:
+		with open(self.path) as f:
 			product_xml = f.read()
 		item_name = "product_{0}_0".format(0)
 		print("Spawning model:%s", self.model_name)
@@ -52,6 +51,11 @@ class Moving():
         self.pub_model.publish(obstacle)
 
 def main():
+    rospack = rospkg.RosPack()
+    Home = rospack.get_path('grasp_project')
+    path_table = Home + '/models/table/model.sdf'
+    path_box = Home + '/models/box/model.sdf'
+
     rospy.init_node('Spawning_APF_Goal')
     Spawning1 = rospy.ServiceProxy("gazebo/spawn_sdf_model", SpawnModel)
     rospy.wait_for_service("gazebo/spawn_sdf_model")
@@ -65,13 +69,16 @@ def main():
     print "X, Y, Z: ", x_position, y_position, z_position
 
     # This is the position of the object spawned in gazebo relative to the base_link
-    ptFinal = [0.13, -0.53, 0.01]
-    oriFinal = quaternion_from_euler(0.0, 0.0, 0.0)
+    ptFinal = [0.0, -0.4, 0.00]
+    oriFinal = quaternion_from_euler(0.0, 0.0, 1.57)
     
-    # moving1 = Moving("custom_box2", Spawning1, x_position - ptFinal[1], y_position + ptFinal[0], z_position + ptFinal[2], oriFinal)
-
-    moving1 = Moving("custom_box2", Spawning1, ptFinal[0], ptFinal[1], ptFinal[2], oriFinal)
+    moving1 = Moving("table", Spawning1, ptFinal[0], ptFinal[1], ptFinal[2], oriFinal, path_table)
     moving1.spawning()
+
+    ptFinal = [0.0, -0.4, 0.0]    
+    oriFinal = quaternion_from_euler(0.0, 0.0, 0.7)
+    moving2 = Moving("custom_box", Spawning1, x_position + ptFinal[0], y_position + ptFinal[1], z_position + ptFinal[2], oriFinal, path_box)
+    moving2.spawning()
 
 if __name__ == '__main__':
     main()

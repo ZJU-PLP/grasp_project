@@ -17,6 +17,7 @@ git clone https://github.com/mikeferguson/moveit_python ../moveit_python
 echo '###### Cloning the robotiq package ######'
 git clone https://github.com/crigroup/robotiq ../robotiq
 cp ../grasp_project/files_to_substitute/CMakeLists.txt ../robotiq/robotiq_description
+cp ../grasp_project/files_to_substitute/robotiq_85_gripper.transmission.xacro ../robotiq/robotiq_description/urdf
 
 echo '###### Installing ros-kinetic-moveit ######'
 sudo apt-get install ros-kinetic-moveit
@@ -81,7 +82,6 @@ fi
 # source /opt/ros/kinetic/setup.bash
 # source ~/2_ROS/devel/setup.bash
 
-echo "export GAZEBO_PLUGIN_PATH=${GAZEBO_PLUGIN_PATH}:~/cob_gazebo_plugins/cob_gazebo_ros_control/build" >> ~/.bashrc
 echo "alias gazebo1='roslaunch grasp_project gazebo_ur5.launch'" >> ~/.bashrc
 echo "alias gazebo2='rosrun grasp_project spawn_model.py'" >> ~/.bashrc
 echo "alias gazebo3='rosrun grasp_project change_gazebo_properties.py'" >> ~/.bashrc

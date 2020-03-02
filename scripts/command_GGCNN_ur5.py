@@ -27,7 +27,7 @@ from moveit_python import PlanningSceneInterface
 from get_geometric_jacobian import *
 from ur_inverse_kinematics import *
 
-from pyquaternion import Quaternion
+#from pyquaternion import Quaternion
 
 # tfBuffer = tf2_ros.Buffer()
 
@@ -218,8 +218,6 @@ class vel_control(object):
                 MOVE_GRIPPER = False
                 CONTACT = True
 
-        print("Move? ", MOVE_GRIPPER)
-
     def monitor_contacts(self, msg):
         print(msg)
                 
@@ -370,184 +368,6 @@ class vel_control(object):
             raise
         except:
             raise
-
-    """
-    Get forces from APF algorithm
-    """
-    def get_joint_forces(self, ptAtual, ptFinal, oriAtual, dist_EOF_to_Goal, err_ori):
-
-        # Get UR5 Jacobian of each link
-        Jacobian = get_geometric_jacobian(self.ur5_param, self.actual_position)
-
-        # Getting attractive forces
-        forces_p = np.zeros((3, 1))
-        forces_w = np.zeros((3, 1))
-
-        for i in range(3):
-            if abs(ptAtual[i] - ptFinal[i]) <= self.dist_att:
-                f_att_l = -self.zeta*(ptAtual[i] - ptFinal[i])
-            else:
-                f_att_l = -self.dist_att*self.zeta*(ptAtual[i] - ptFinal[i])/dist_EOF_to_Goal[i]
-
-            if abs(oriAtual[i] - self.Displacement[i]) <= self.dist_att_config:
-                f_att_w = -self.zeta*(oriAtual[i] - self.Displacement[i])
-            else:
-                f_att_w = -self.dist_att_config*self.zeta*(oriAtual[i] - self.Displacement[i])/dist_EOF_to_Goal[i]
-
-            forces_p[i, 0] = f_att_l
-            forces_w[i, 0] = f_att_w
-
-        forces_p = np.asarray(forces_p)
-        JacobianAtt_p = np.asarray(Jacobian[5])
-        joint_att_force_p = JacobianAtt_p.dot(forces_p)
-        joint_att_force_p = np.multiply(joint_att_force_p, [[0.5], [0.1], [1.5], [1], [1], [1]])
-
-        forces_w = np.asarray(forces_w)
-        JacobianAtt_w = np.asarray(Jacobian[6])
-        joint_att_force_w = JacobianAtt_w.dot(forces_w)
-        joint_att_force_w = np.multiply(joint_att_force_w, [[0], [0.1], [0.1], [0.4], [0.4], [0.4]])
-
-        return np.transpose(joint_att_force_p), np.transpose(joint_att_force_w)
-
-
-    """
-    Gets ptFinal and oriAtual
-    """
-    def get_tf_param(self, approach):
-        # Check if a marker is used instead of a dynamic goal published by publish_dynamic_goal.py
-        if self.args.armarker:
-            # When the marker disappears we get an error and the node is killed. To avoid this
-            # we implemented this try function to check if ar_marker_0 frame is available
-            try:
-                # used when Ar Marker is ON
-                ptFinal, oriFinal = self.tf.lookupTransform("base_link", "ar_marker_0", rospy.Time())
-
-                oriFinal = list(euler_from_quaternion(oriFinal))
-
-                # Make YAW Angle goes from 0 to 2*pi
-                # Solution proposed by
-                # https://answers.ros.org/question/302953/tfquaternion-getangle-eqivalent-for-rospy/
-                ptAtual, oriAtual = self.tf.lookupTransform("ar_marker_0", "grasping_link", rospy.Time())
-                angle = -1 * 2 * np.arccos(oriAtual[-1])
-                oriAtual = list(euler_from_quaternion(oriAtual))
-                oriAtual[0] = angle
-                self.add_sphere(ptFinal, self.diam_goal, ColorRGBA(0.0, 1.0, 0.0, 1.0))
-
-                if not approach:
-                    # Reach the position above the goal (object)
-                    ptFinal[-1] += 0.02
-                    max_error_allowed_pos_z = self.max_error_allowed_pos_z + ptFinal[-1]
-                    return ptFinal, oriAtual, oriFinal, max_error_allowed_pos_z
-
-                max_error_allowed_pos_z = self.max_error_allowed_pos_z
-
-                # Return it if pick is performed
-                return ptFinal, oriAtual, oriFinal, max_error_allowed_pos_z
-            except:
-                if not rospy.is_shutdown():
-                    self.home_pos()
-                    raw_input("\nWaiting for /ar_marker_0 frame to be available! Press ENTER after /ar_marker_0 shows up.")
-                    turn_velocity_controller_on()
-                    self.CPA_vel_control(approach)
-
-    """
-    Main function related the Artificial Potential Field method
-    """
-    def CPA_vel_control(self, approach = False):
-
-        # Return the end effector location relative to the base_link
-        ptAtual, _ = self.tf.lookupTransform("base_link", "grasping_link", rospy.Time())
-
-        if approach:
-            self.alfa_pos = 8 * self.alfa_geral
-            self.pos_z = 0.04 if approach else None
-
-        if self.args.gazebo:
-            self.alfa_pos = 4.5 * self.alfa_geral * self.gravity_compensation * 0.001 # Grad step of positioning - Default: 0.5
-            self.alfa_rot = 4 * self.alfa_geral * 0.01
-
-            if approach:
-                self.alfa_pos = 8 * self.alfa_geral * self.gravity_compensation # Grad step of positioning - Default: 0.5
-                self.alfa_rot = 6 * self.alfa_geral # Grad step of orientation - Default: 0.4
-
-
-        # Get ptFinal published by ar_marker_0 frame and the orientation from grasping_link to ar_marker_0
-        ptFinal, oriAtual, oriFinal, max_error_allowed_pos_z = self.get_tf_param(approach)
-
-        # Calculate the correction of the orientation relative to the actual orientation
-        R, P, Y = -1 * oriAtual[0], -1 * oriAtual[1], 0.0
-        corr = [R, P, Y]
-        oriAtual = [oriAtual[i] + corr[i] for i in range(len(corr))]
-        err_ori = abs(np.sum(oriAtual))
-
-        # Calculate the distance between end effector and goal in each direction
-        # it is necessary to approach the object
-        dist_vec_x, dist_vec_y, dist_vec_z = np.abs(ptAtual - np.asarray(ptFinal))
-        if approach:
-            dist_EOF_to_Goal = [dist_vec_x, dist_vec_y, self.pos_z]
-        else:
-            dist_EOF_to_Goal = [dist_vec_x, dist_vec_y, dist_vec_z]
-
-        # Frequency of the velocity controller pubisher
-        # Max frequency: 125 Hz
-        rate = rospy.Rate(125)
-
-        while not rospy.is_shutdown() and (dist_vec_z > max_error_allowed_pos_z or dist_vec_y > self.max_error_allowed_pos_y or \
-            dist_vec_x > self.max_error_allowed_pos_x or err_ori > self.max_error_allowed_ori):
-
-            # In order to keep orientation constant, we need to correct the orientation
-            # of the end effector in respect to the ar_marker_0 orientation
-            oriAtual = [oriAtual[i] + corr[i] for i in range(len(corr))]
-
-            # Get absolute orientation error
-            err_ori = abs(np.sum(oriAtual))
-
-            # Get attractive linear and angular forces and repulsive forces
-            joint_att_force_p, joint_att_force_w = \
-                self.get_joint_forces(ptAtual, ptFinal, oriAtual, dist_EOF_to_Goal, err_ori)
-
-            # Publishes joint valocities related to position only
-            self.joint_vels.data = np.array(self.alfa_pos * joint_att_force_p[0])
-
-            # If orientation control is turned on, sum actual position forces to orientation forces
-            if self.args.OriON:
-                self.joint_vels.data = self.joint_vels.data + \
-                    self.alfa_rot * joint_att_force_w[0]
-
-            self.pub_vel.publish(self.joint_vels)
-
-            # Get ptFinal published by ar_marker_0 frame and the orientation from grasping_link to ar_marker_0
-            # The oriFinal needs to be tracked online because the object will be dynamic
-            ptFinal, oriAtual, oriFinal, max_error_allowed_pos_z = self.get_tf_param(approach)
-
-            # Calculate the distance between end effector and goal
-            # dist_EOF_to_Goal = np.linalg.norm(ptAtual - np.asarray(ptFinal))
-            dist_vec_x, dist_vec_y, dist_vec_z = np.abs(ptAtual - np.asarray(ptFinal))
-
-            # Return the end effector position relative to the base_link
-            ptAtual, _ = self.tf.lookupTransform("base_link", "grasping_link", rospy.Time())
-
-            print "Z_position: ", ptAtual[-1]
-
-            # Check wrist_1_link position just for safety
-            wristPt, _ = self.tf.lookupTransform("base_link", "wrist_1_link", rospy.Time())
-
-            # Function to ensure safety. It does not allow End Effector to move below 20 cm above the desk
-            self.safety_stop(ptAtual, wristPt)
-
-            if approach:
-                dist_vec_z = self.pos_z
-                # The end effector will move 1 cm below the marker
-                if ptAtual[-1] < (ptFinal[-1] - 0.01):
-                    print "Break loop."
-                    break
-                ptAtual = [ptAtual[0], ptAtual[1], self.pos_z]
-                dist_EOF_to_Goal = [dist_vec_x, dist_vec_y, self.pos_z]
-            else:
-                dist_EOF_to_Goal = [dist_vec_x, dist_vec_y, dist_vec_z]
-
-            rate.sleep()
-
 
 def main():
     global MOVE_GRIPPER, STARTED_GRIPPER

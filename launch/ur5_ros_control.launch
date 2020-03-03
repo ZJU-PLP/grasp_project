@@ -17,12 +17,17 @@
   <arg name="base_frame" default="$(arg prefix)base" />
   <arg name="tool_frame" default="$(arg prefix)tool0_controller" />
   <arg name="shutdown_on_disconnect" default="true" />
-  <arg name="controllers" default="joint_state_controller force_torque_sensor_controller pos_based_pos_traj_controller"/>
-  <arg name="stopped_controllers" default="joint_group_vel_controller vel_based_pos_traj_controller "/>
+  <arg name="controllers" default="pos_based_pos_traj_controller joint_state_controller"/>
+  <arg name="stopped_controllers" default="force_torque_sensor_controller  joint_group_vel_controller vel_based_pos_traj_controller"/>
   <!-- robot model -->
   <!-- <include file="$(find ur_description)/launch/ur5_upload.launch">
     <arg name="limited" value="$(arg limited)"/>
   </include> -->
+
+  #######################################
+  # Load Camera
+  ########################################
+  <!-- <include file="$(find grasp_project)/launch/rs_d435_camera.launch"/> -->
 
   <!-- Load hardware interface -->
   <node name="ur_hardware_interface" pkg="ur_modern_driver" type="ur_driver" output="log" launch-prefix="$(arg launch_prefix)">
@@ -40,11 +45,11 @@
     <param name="shutdown_on_disconnect" type="bool" value="$(arg shutdown_on_disconnect)"/>
   </node>
 
+  #######################################
+  # Load UR5 Controllers
+  ########################################
   <!-- Load UR5 URDF -->
-  <param name="robot_description"
-         command="$(find xacro)/xacro --inorder '$(find grasp_project)/urdf/ur5_with_cam.urdf.xacro'
-                  robot_pose:=0.84
-                  load_table:=true"/>
+  <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find grasp_project)/urdf/ur5_with_cam.urdf.xacro'" />
 
   <!-- Load controller settings -->
   <rosparam file="$(find ur_modern_driver)/config/ur5_controllers.yaml" command="load"/>
@@ -57,6 +62,35 @@
   <node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
     output="screen" args="load $(arg stopped_controllers)" />
 
+  #######################################
+  # Robot state publisher
+  ########################################
   <!-- Convert joint states to /tf tranforms -->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+
+  #######################################
+  # Load Gripper Controllers
+  ########################################
+  <!-- Load Robotiq Gripper Controller -->
+  <rosparam file="$(find grasp_project)/controller/ur5gripper_controllers.yaml"
+            command="load"/>
+
+  <!-- <node name="gripper_controller_spawner"
+        pkg="controller_manager"
+        type="spawner"
+        args="gripper_controller_vel"/> -->
+
+  #######################################
+  # Load Param
+  ########################################
+  <!-- Load joint names into the parameter server -->
+  <rosparam file="$(find grasp_project)/config/joint_names.yaml" command="load" />
+  
+  <!-- Launch GGCNN parameters -->
+  <group ns="GGCNN">
+    <rosparam file="$(find grasp_project)/config/ggcnn_param.yaml" />
+  </group>
+
 </launch>
+
+  

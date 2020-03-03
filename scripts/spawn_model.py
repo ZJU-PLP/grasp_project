@@ -56,7 +56,7 @@ def main():
     path_table = Home + '/models/table/model.sdf'
     path_box = Home + '/models/box/model.sdf'
 
-    rospy.init_node('Spawning_APF_Goal')
+    rospy.init_node('spawn_model')
     Spawning1 = rospy.ServiceProxy("gazebo/spawn_sdf_model", SpawnModel)
     rospy.wait_for_service("gazebo/spawn_sdf_model")
     model_coordinates = rospy.ServiceProxy(
@@ -74,6 +74,8 @@ def main():
     
     moving1 = Moving("table", Spawning1, ptFinal[0], ptFinal[1], ptFinal[2], oriFinal, path_table)
     moving1.spawning()
+
+    rospy.sleep(0.2)
 
     ptFinal = [0.1, -0.55, 0.0]    
     oriFinal = quaternion_from_euler(0.0, 0.0, 0.7)

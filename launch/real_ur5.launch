@@ -1,44 +1,17 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="world_name" default="$(find gazebo_ros)/launch/empty_world.launch"/>
-  <arg name="paused" default="true" doc="Starts gazebo in paused mode" />
-  <arg name="gui" default="true" doc="Starts gazebo gui" />
+  #######################################
+  # Load Camera
+  ########################################
+  <include file="$(find grasp_project)/launch/rs_d435_camera.launch"/>
 
   ########################################
   # Load UR5 URDF
   ########################################
   <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find grasp_project)/urdf/ur5_with_cam.urdf.xacro'" />
 
-  ########################################
-  # Load Robot Description - GAZEBO
-  ########################################
-
-  <!-- include gazebo_ros launcher -->
-  <include file="$(find gazebo_ros)/launch/empty_world.launch">
-    <arg name="world_name" default="worlds/empty.world"/>
-    <arg name="paused" value="$(arg paused)"/>
-    <arg name="gui" value="$(arg gui)"/>
-  </include>
-
-  <node pkg="grasp_project" type="spawn_model.py" name="spawn_gazebo_models"/>
-    
-  <!-- push robot_description to factory and spawn robot in gazebo x = 1.90 y = -2.40, z = 0.875-->
-  <node name="spawn_robot"
-        pkg="gazebo_ros"
-        type="spawn_model"
-        args="-model robot
-              -param robot_description
-              -urdf
-              -x 0
-              -y 0
-              -z 1.015
-              -Y 1.57
-              -unpause"
-        respawn="false"
-        output="screen" />  
-
-  ########################################
-  # Load Parameters
+  #######################################
+  # Load Param
   ########################################
   <!-- Load joint names into the parameter server -->
   <rosparam file="$(find grasp_project)/config/joint_names.yaml" command="load" />
@@ -48,20 +21,20 @@
     <rosparam file="$(find grasp_project)/config/ggcnn_param.yaml" />
   </group>
 
-  ########################################
+  #######################################
   # Load Gripper Controllers
   ########################################
   <!-- Load Robotiq Gripper Controller -->
   <rosparam file="$(find grasp_project)/controller/ur5gripper_controllers.yaml"
             command="load"/>
 
-  <node name="gripper_controller_spawner"
+  <!-- <node name="gripper_controller_spawner"
         pkg="controller_manager"
         type="spawner"
-        args="gripper_controller_vel"/>
+        args="gripper_controller_vel"/> -->
 
   
-  ########################################
+  #######################################
   # Load UR5 Controllers
   # load velocity and position controllers
   ########################################

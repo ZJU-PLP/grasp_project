@@ -43,6 +43,7 @@ crop_size = rospy.get_param("/GGCNN/crop_size")
 FOV = rospy.get_param("/GGCNN/FOV")
 camera_topic_info = rospy.get_param("/GGCNN/camera_topic_info")
 camera_topic = rospy.get_param("/GGCNN/camera_topic")
+# camera_topic_realsense = rospy.get_param("/GGCNN/camera_topic_realsense")
 
 # Output publishers.
 grasp_pub = rospy.Publisher('ggcnn/img/grasp', Image, queue_size=1)
@@ -321,7 +322,7 @@ def depth_callback(depth_message):
                          "object_detected",
                          "camera_depth_optical_frame_rotated")
 
-depth_sub = rospy.Subscriber(camera_topic, Image, depth_callback, queue_size=1)
+depth_sub = rospy.Subscriber('/camera/depth/image_rect_raw', Image, depth_callback, queue_size=1)
 
 while not rospy.is_shutdown():
     rospy.spin()

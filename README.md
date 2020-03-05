@@ -78,7 +78,7 @@ git clone https://github.com/caiobarrosv/grasp_project
 
 Run the install.sh file
 ```bash
-cd ~/catkin_ws_new/src/grasp_project
+cd ~/catkin_ws_new/src/grasp_project/install
 sudo chmod +x ./install.sh
 ./install.sh #without sudo
 ```

@@ -417,7 +417,7 @@ def main():
     turn_position_controller_on()
 
     # Calculate joint values equivalent to the HOME position
-    joint_values = get_ik([-0.4, -0.10, 0.45])
+    joint_values = get_ik([-0.4, -0.11, 0.35])
     
     ur5_vel = vel_control(arg, joint_values)
     

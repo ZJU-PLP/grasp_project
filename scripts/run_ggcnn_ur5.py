@@ -25,6 +25,13 @@ from tf.transformations import quaternion_from_euler
 
 import copy
 
+import argparse
+
+parser = argparse.ArgumentParser(description='GGCNN')
+# store_false assumes that variable is already true and is only set to false if is given in command terminal
+parser.add_argument('--real', action='store_true', help='Consider the real intel realsense')
+args = parser.parse_args()
+
 bridge = CvBridge()
 
 # Load the Network.
@@ -42,8 +49,10 @@ br = TransformBroadcaster()
 crop_size = rospy.get_param("/GGCNN/crop_size")
 FOV = rospy.get_param("/GGCNN/FOV")
 camera_topic_info = rospy.get_param("/GGCNN/camera_topic_info")
-camera_topic = rospy.get_param("/GGCNN/camera_topic")
-# camera_topic_realsense = rospy.get_param("/GGCNN/camera_topic_realsense")
+if args.real:
+    camera_topic = rospy.get_param("/GGCNN/camera_topic_realsense")
+else:
+    camera_topic = rospy.get_param("/GGCNN/camera_topic")
 
 # Output publishers.
 grasp_pub = rospy.Publisher('ggcnn/img/grasp', Image, queue_size=1)
@@ -67,6 +76,8 @@ cx = K[2]
 fy = K[4]
 cy = K[5]
 
+
+
 class TimeIt:
     def __init__(self, s):
         self.s = s
@@ -89,7 +100,7 @@ def depth_callback(depth_message):
     global ROBOT_Z
     global fx, cx, fy, cy
     global transf
-    global crop_size
+    global crop_size, args
 
     # The EOF position should be tracked in real time by depth_callback
     link_pose, _ = transf.lookupTransform("base_link", "grasping_link", rospy.Time(0))
@@ -188,7 +199,7 @@ def depth_callback(depth_message):
     with TimeIt('Filter'):
         # Filter the outputs
         # The filters are applied to augment the chances of getting a good grasp pose
-        points_out = ndimage.filters.gaussian_filter(points_out, 3.0)
+        points_out = ndimage.filters.gaussian_filter(points_out, 7.0)
         ang_out = ndimage.filters.gaussian_filter(ang_out, 2.0)
         width_out = ndimage.filters.gaussian_filter(width_out, 1.0)
 
@@ -249,7 +260,8 @@ def depth_callback(depth_message):
 
         # Get the max_pixel height
         # Offset is used to sync the object position and cam feedback
-        offset_mm = 45
+        offset_mm = 100 if args.real else 45
+
         point_depth = depth[max_pixel[0], max_pixel[1]] - offset_mm
 
         ang = ang + np.pi/2
@@ -317,12 +329,21 @@ def depth_callback(depth_message):
                          "camera_depth_optical_frame")
 
         # -1 is multiplied by cmd_msg.data[3] because the object_detected frame is inverted
-        br.sendTransform((cmd_msg.data[0], cmd_msg.data[1] - 0.023, cmd_msg.data[2] * np.cos(0.244)), quaternion_from_euler(0.0, 0.0, -1*cmd_msg.data[3]),
+        if args.real:
+            offset_y = -0.02
+            offset_x = -0.02
+            height = -0.13
+        else:
+            offset_y = - 0.02
+            offset_x = 0.0
+            height = np.cos(0.244)
+
+        br.sendTransform((cmd_msg.data[0] + offset_x, cmd_msg.data[1] + offset_y, cmd_msg.data[2]*height), quaternion_from_euler(0.0, 0.0, -1*cmd_msg.data[3]),
                          rospy.Time.now(),
                          "object_detected",
                          "camera_depth_optical_frame_rotated")
 
-depth_sub = rospy.Subscriber('/camera/depth/image_rect_raw', Image, depth_callback, queue_size=1)
+depth_sub = rospy.Subscriber(camera_topic, Image, depth_callback, queue_size=1)
 
 while not rospy.is_shutdown():
     rospy.spin()

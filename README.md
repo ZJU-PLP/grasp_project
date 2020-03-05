@@ -8,6 +8,7 @@
 4. [Sending commands through the action server](#4.0)
 5. [Connecting with real UR5](#5.0)
 6. [Meetings minutes](#6.0)
+7. [To do](#7.0)
 
 ------------
 
@@ -163,7 +164,17 @@ Use the following command in order to connect with real UR5.
 If you are using velocity control, do not use bring_up. Use ur5_ros_control instead.
 
 ```
-roslaunch ur_modern_driver ur5_ros_control.launch robot_ip:=192.168.131.12
+roslaunch grasp_project ur5_ros_control.launch robot_ip:=192.168.131.13
+```
+
+Launch the real Intel Realsense D435
+```
+roslaunch grasp_project rs_d435_camera.launch
+```
+
+Launch the main node of the Intel Realsense D435
+```
+rosrun grasp_project command_GGCNN_ur5.py --real
 ```
 
 <a name="6.0"></a>
@@ -174,3 +185,12 @@ Topics covered:
 2. Check how to use neural networks to predict the position of objects. Thus, the proposed method would be robust against camera limitations regarding the proximity of the object, that is, even if there is no depth information, the neural network would use past data to predict where the object is at the given moment.
 3. Search for grasping applications.
 4. Translate the thesis into English
+
+<a name="7.0"></a>
+### 7.0 To do
+#### March/20
+- [ ] Test realsense post-processing to enhance depth images - librealsense/examples/post-processing
+- [ ] Record a rosbag file of the realsense depth cam
+- [ ] Set the right position for the object detected frame
+- [ ] Test the goal position using UR5
+- [ ] Implement Robotiq gripper and force control

@@ -55,7 +55,7 @@ Processing enabled by this node:
 
   <arg name="fisheye_width"       default="640"/>
   <arg name="fisheye_height"      default="480"/>
-  <arg name="enable_fisheye"      default="true"/>
+  <arg name="enable_fisheye"      default="false"/>
 
   <arg name="depth_width"         default="640"/>
   <arg name="depth_height"        default="480"/>
@@ -79,9 +79,12 @@ Processing enabled by this node:
   <arg name="enable_gyro"         default="true"/>
   <arg name="enable_accel"        default="true"/>
 
-  <arg name="enable_pointcloud"   default="false"/>
+  <arg name="enable_pointcloud"   default="true"/>
   <arg name="enable_sync"         default="true"/>
+  <!-- If set to true, will publish additional topics with the all the images aligned to the depth image.
+       The topics are of the form: /camera/aligned_depth_to_color/image_raw etc. -->
   <arg name="align_depth"         default="true"/>
+  <!-- <arg name="filters" value="disparity,temporal,spatial"/> -->
   <arg name="filters"             default=""/>
 
   <!-- rgbd_launch specific arguments -->
@@ -103,8 +106,8 @@ Processing enabled by this node:
   <!-- Processing Modules -->
   <arg name="rgb_processing"                  default="true"/>
   <arg name="debayer_processing"              default="false" />
-  <arg name="ir_processing"                   default="false"/>
-  <arg name="depth_processing"                default="false"/>
+  <arg name="ir_processing"                   default="true"/>
+  <arg name="depth_processing"                default="true"/>
   <arg name="depth_registered_processing"     default="true"/>
   <arg name="disparity_processing"            default="false"/>
   <arg name="disparity_registered_processing" default="false"/>
@@ -144,6 +147,8 @@ Processing enabled by this node:
       <arg name="infra_height"             value="$(arg infra_height)"/>
       <arg name="enable_infra1"            value="$(arg enable_infra1)"/>
       <arg name="enable_infra2"            value="$(arg enable_infra2)"/>
+
+      <arg name="initial_reset"            value="$(arg initial_reset)"/>
 
       <arg name="fisheye_fps"              value="$(arg fisheye_fps)"/>
       <arg name="depth_fps"                value="$(arg depth_fps)"/>

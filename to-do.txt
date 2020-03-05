@@ -1,1 +1,0 @@
-1. verificar controlador da garra (pode ser verificado com o URSIM)

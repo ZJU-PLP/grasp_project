@@ -2,8 +2,8 @@
   <arg name="serial_no"         default=""/>
   <arg name="json_file_path"    default=""/>
   <arg name="camera"            default="camera"/>
-  <arg name="tf_prefix"           default="$(arg camera)"/>
-  <arg name="rosbag_filename"   default=""/>
+  <arg name="tf_prefix"         default="$(arg camera)"/>
+  <arg name="rosbag_filename"   default="$(find grasp_project)/rosbag/a.bag"/>
 
   <arg name="fisheye_width"       default="0"/>
   <arg name="fisheye_height"      default="0"/>

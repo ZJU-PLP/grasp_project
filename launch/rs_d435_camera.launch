@@ -85,7 +85,7 @@ Processing enabled by this node:
        The topics are of the form: /camera/aligned_depth_to_color/image_raw etc. -->
   <arg name="align_depth"         default="true"/>
   <!-- <arg name="filters" value="disparity,temporal,spatial"/> -->
-  <arg name="filters"             default=""/>
+  <arg name="filters"             default="disparity,temporal,spatial"/>
 
   <!-- rgbd_launch specific arguments -->
 
@@ -98,6 +98,7 @@ Processing enabled by this node:
   <arg name="depth_registered"                default="aligned_depth_to_color" if="$(arg align_depth)" />
   <arg name="depth_registered_filtered"       default="$(arg depth_registered)" />
   <arg name="projector"                       default="projector" />
+  <arg name="initial_reset"                   default="true" />
 
   <!-- Disable bond topics by default -->
   <arg name="bond"                            default="false" />
@@ -115,7 +116,19 @@ Processing enabled by this node:
   <arg name="sw_registered_processing"        default="true" unless="$(arg align_depth)" />
   <arg name="sw_registered_processing"        default="false" if="$(arg align_depth)" />
 
+  #######################################
+  # Load Param
+  ########################################
+  <!-- Load joint names into the parameter server -->
+  <rosparam file="$(find grasp_project)/config/joint_names.yaml" command="load" />
+  
+  <!-- Launch GGCNN parameters -->
+  <group ns="GGCNN">
+    <rosparam file="$(find grasp_project)/config/ggcnn_param.yaml" />
+  </group>
+
   <group ns="$(arg camera)">
+
 
     <!-- Launch the camera device nodelet-->
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">

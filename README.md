@@ -189,8 +189,8 @@ Topics covered:
 <a name="7.0"></a>
 ### 7.0 To do
 #### March/20
-- [ ] Test realsense post-processing to enhance depth images - librealsense/examples/post-processing
-- [ ] Record a rosbag file of the realsense depth cam
+- [x] Test realsense post-processing to enhance depth images - librealsense/examples/post-processing
+- [x] Record a rosbag file of the realsense depth cam
 - [ ] Set the right position for the object detected frame
 - [ ] Test the goal position using UR5
 - [ ] Implement Robotiq gripper and force control

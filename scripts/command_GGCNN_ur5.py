@@ -27,6 +27,10 @@ from moveit_python import PlanningSceneInterface
 from get_geometric_jacobian import *
 from ur_inverse_kinematics import *
 
+# Robotiq
+import roslib; roslib.load_manifest('robotiq_2f_gripper_control')
+from robotiq_2f_gripper_control.msg import _Robotiq2FGripper_robot_output  as outputMsg
+
 #from pyquaternion import Quaternion
 
 # tfBuffer = tf2_ros.Buffer()
@@ -110,7 +114,7 @@ class vel_control(object):
         self.diam_goal = 0.05
 
         # Topic used to publish vel commands
-        self.pub_vel = rospy.Publisher('/joint_group_vel_controller/command', Float64MultiArray,  queue_size=10)
+        self.pub_vel = rospy.Publisher('/joint_group_vel_controller/command', Float64MultiArray,  queue_size=1)
 
         # Topic used to control the gripper
         # self.griper_pos = rospy.Publisher('/gripper/command', JointTrajectory,  queue_size=10)
@@ -123,11 +127,11 @@ class vel_control(object):
         # rospy.loginfo("Connected to server (gripper_controller)")
 
         self.joint_vels_gripper = Float64MultiArray()
-        self.pub_vel_gripper = rospy.Publisher('/gripper_controller_vel/command', Float64MultiArray,  queue_size=10)
+        self.pub_vel_gripper = rospy.Publisher('/gripper_controller_vel/command', Float64MultiArray,  queue_size=1)
 
         # visual tools from moveit
         # self.scene = PlanningSceneInterface("base_link")
-        self.marker_publisher = rospy.Publisher('visualization_marker2', Marker, queue_size=10)
+        self.marker_publisher = rospy.Publisher('visualization_marker2', Marker, queue_size=1)
 
         # actionClient used to send joint positions
         self.client = actionlib.SimpleActionClient('pos_based_pos_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
@@ -142,12 +146,12 @@ class vel_control(object):
         # Gazebo topics
         if self.args.gazebo:
             # Subscriber used to read joint values
-            rospy.Subscriber('/joint_states', JointState, self.ur5_actual_position, queue_size=10)
+            rospy.Subscriber('/joint_states', JointState, self.ur5_actual_position, queue_size=1)
 
-            self.pub_model = rospy.Publisher('/gazebo/set_link_state', LinkState, queue_size=10)
+            self.pub_model = rospy.Publisher('/gazebo/set_link_state', LinkState, queue_size=1)
             self.model = rospy.wait_for_message('gazebo/model_states', ModelStates)
             self.model_coordinates = rospy.ServiceProxy( '/gazebo/get_link_state', GetLinkState)
-            self.wrench = rospy.Subscriber('/ft_sensor/raw', WrenchStamped, self.monitor_wrench, queue_size=10)
+            self.wrench = rospy.Subscriber('/ft_sensor/raw', WrenchStamped, self.monitor_wrench, queue_size=1)
             # self.model_contacts = rospy.Subscriber('/gazebo/default/physics/contacts', ContactState, self.monitor_contacts, queue_size=10)
 
         # Standard attributes used to send joint position commands
@@ -158,6 +162,9 @@ class vel_control(object):
                                             'elbow_joint', 'wrist_1_joint', 'wrist_2_joint',
                                             'wrist_3_joint']
         self.initial_time = 4
+
+        # Robotiq control
+        self.pub_gripper_command = rospy.Publisher('Robotiq2FGripperRobotOutput', outputMsg.Robotiq2FGripper_robot_output, queue_size=1)
 
         # Class attribute used to perform TF transformations
         self.tf = TransformListener()
@@ -180,6 +187,40 @@ class vel_control(object):
         marker.scale = Vector3(diam, diam, diam)
         marker.color = color
         self.marker_publisher.publish(marker)
+
+    def genCommand(self, char, command):
+        """Update the command according to the character entered by the user."""    
+            
+        if char == 'a':
+            # command = outputMsg.Robotiq2FGripper_robot_output();
+            command.rACT = 1 # Gripper activation
+            command.rGTO = 1 # Go to position request
+            command.rSP  = 255 # Speed
+            command.rFR  = 150 # Force
+
+        if char == 'c':
+            command.rACT = 1
+            command.rGTO = 1
+            command.rATR = 0
+            command.rPR = 255
+            command.rSP = 40
+            command.rFR = 150
+
+        if char == 'o':
+            command.rACT = 1
+            command.rGTO = 1
+            command.rATR = 0
+            command.rPR = 0
+            command.rSP = 40
+            command.rFR = 150
+
+        return command
+
+    def command_gripper(self, action):
+        command = outputMsg.Robotiq2FGripper_robot_output();
+        command = self.genCommand(action, command)
+        self.pub_gripper_command.publish(command)  
+
 
     """
     Function to ensure safety
@@ -417,9 +458,9 @@ def main():
     turn_position_controller_on()
 
     # Calculate joint values equivalent to the HOME position
-    joint_values = get_ik([-0.4, -0.11, 0.35])
+    joint_values_home = get_ik([-0.4, -0.11, 0.35])
     
-    ur5_vel = vel_control(arg, joint_values)
+    ur5_vel = vel_control(arg, joint_values_home)
     
     # Send the robot to the custom HOME position
     raw_input("==== Press enter to 'home' the robot and open gripper!")
@@ -431,7 +472,9 @@ def main():
         rospy.loginfo("Gripper started!")        
     else:
         rospy.on_shutdown(ur5_vel.home_real_robot) # Not working on real robot
-        ur5_vel.set_pos_real_robot(joint_values)
+        ur5_vel.set_pos_real_robot(joint_values_home)
+        ur5_vel.command_gripper('a')
+        ur5_vel.command_gripper('o')
     
     GRIPPER_INIT = False
 
@@ -452,20 +495,31 @@ def main():
     else:
         ur5_vel.set_pos_real_robot(joint_values)
 
-    # Start monitoring gripper torques
-    STARTED_GRIPPER = True
+    if arg.gazebo:
+        # Start monitoring gripper torques
+        STARTED_GRIPPER = True
 
     raw_input("==== Press enter to close the gripper!")
-    GRASPING = True
-    ur5_vel.gripper_vel_control_close()    
+    if arg.gazebo:
+        GRASPING = True
+        ur5_vel.gripper_vel_control_close()
+    else:
+        ur5_vel.command_gripper('c')
 
     # After this raw_input, the rospy.on_shutdown will be called
     raw_input("==== Press enter to 'home' the robot!")
-    ur5_vel.home_pos()
+    if arg.gazebo:
+        ur5_vel.home_pos()        
+    else:
+        ur5_vel.set_pos_real_robot(joint_values_home)
+
 
     raw_input("==== Press enter to open the gripper!")
-    MOVE_GRIPPER = True    
-    ur5_vel.gripper_vel_control_open()
+    if arg.gazebo:
+        MOVE_GRIPPER = True    
+        ur5_vel.gripper_vel_control_open()
+    else:
+        ur5_vel.command_gripper('o')
 
 if __name__ == '__main__':
     try:

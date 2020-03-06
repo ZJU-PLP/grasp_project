@@ -110,3 +110,11 @@ echo "alias fix_usb1='sudo apt remove fwupd'" >> ~/.bashrc
 echo "alias fix_usb2='sudo killall fwupd'" >> ~/.bashrc
 echo "alias clean1='sudo du -sh /var/cache/apt'" >> ~/.bashrc
 echo "alias clean2='sudo apt-get clean'" >> ~/.bashrc
+echo "alias real1='roslaunch grasp_project ur5_ros_control.launch robot_ip:=192.168.131.13'"
+echo "alias real2='roslaunch grasp_project rs_d435_camera.launch'"
+echo "alias real3='rosrun robotiq_2f_gripper_control Robotiq2FGripperRtuNode.py /dev/ttyUSB0'"
+echo "alias real4='rosrun grasp_project run_ggcnn_ur5.py --real' "
+echo "alias real5='rosrun grasp_project command_GGCNN_ur5.py'"
+echo "alias real6='roslaunch grasp_project rviz_ur5.launch'"
+echo "# Gripper listener"
+echo "alias real5='rosrun robotiq_2f_gripper_control Robotiq2FGripperStatusListener.py'"

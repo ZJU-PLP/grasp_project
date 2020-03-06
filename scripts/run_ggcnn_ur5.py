@@ -330,15 +330,14 @@ def depth_callback(depth_message):
 
         # -1 is multiplied by cmd_msg.data[3] because the object_detected frame is inverted
         if args.real:
-            offset_y = -0.02
-            offset_x = -0.02
-            height = -0.13
+            offset_y = -0.018
+            offset_x = 0.018
+            offset_z = -0.095
         else:
             offset_y = - 0.02
             offset_x = 0.0
-            height = np.cos(0.244)
 
-        br.sendTransform((cmd_msg.data[0] + offset_x, cmd_msg.data[1] + offset_y, cmd_msg.data[2]*height), quaternion_from_euler(0.0, 0.0, -1*cmd_msg.data[3]),
+        br.sendTransform((cmd_msg.data[0] + offset_x, cmd_msg.data[1] + offset_y, cmd_msg.data[2] + offset_z), quaternion_from_euler(0.0, 0.0, -1*cmd_msg.data[3]),
                          rospy.Time.now(),
                          "object_detected",
                          "camera_depth_optical_frame_rotated")

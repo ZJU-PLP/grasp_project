@@ -76,8 +76,6 @@ cx = K[2]
 fy = K[4]
 cy = K[5]
 
-
-
 class TimeIt:
     def __init__(self, s):
         self.s = s
@@ -110,9 +108,12 @@ def depth_callback(depth_message):
     with TimeIt('Crop'):
 
         # Depth is the depth image converted into open cv format
+        # Real realsense resolution 480x640
         depth = bridge.imgmsg_to_cv2(depth_message)
 
         height_res, width_res = depth.shape
+        # print("Height_res: ", height_res)
+        # print("Width_res: ", width_res)
         
         # It crops a 300x300 resolution square at the top of the depth image
         depth_crop = depth[0 : crop_size, (width_res - crop_size)//2 : (width_res - crop_size)//2 + crop_size]
@@ -137,12 +138,10 @@ def depth_callback(depth_message):
         # Ou seja, copia os pixels pretos da imagem e a posicao deles
         mask = (depth_crop == 0).astype(np.uint8)
 
-        kernel = np.ones((3, 3),np.uint8)
-        mask = cv2.dilate(mask, kernel, iterations=1)
-
-        depth_crop[mask==1] = 0
-
-        # depth_crop = np.divide(depth_crop, 1000)
+        # from mvp repo
+        # kernel = np.ones((3, 3),np.uint8)
+        # mask = cv2.dilate(mask, kernel, iterations=1)
+        # depth_crop[mask==1] = 0
 
         # Scale to keep as float, but has to be in bounds -1:1 to keep opencv happy.
         # Copia o maior valor para depois realizar a escala
@@ -199,7 +198,7 @@ def depth_callback(depth_message):
     with TimeIt('Filter'):
         # Filter the outputs
         # The filters are applied to augment the chances of getting a good grasp pose
-        points_out = ndimage.filters.gaussian_filter(points_out, 7.0)
+        points_out = ndimage.filters.gaussian_filter(points_out, 5.0)
         ang_out = ndimage.filters.gaussian_filter(ang_out, 2.0)
         width_out = ndimage.filters.gaussian_filter(width_out, 1.0)
 
@@ -263,21 +262,22 @@ def depth_callback(depth_message):
         offset_mm = 100 if args.real else 45
 
         point_depth = depth[max_pixel[0], max_pixel[1]] - offset_mm
+        print("Point_depth: ", point_depth)
 
         ang = ang + np.pi/2
-        print("\n")
+        # print("\n")
         print("Angulo [graus]: %.6s" % (ang * 180 / np.pi))
-        print("Robot_z [m]: %.6s" % (ROBOT_Z))
+        # print("Robot_z [m]: %.6s" % (ROBOT_Z))
         crop_size_width = 300.0
-        print("Width [pixels]: %.6s" % (width))
+        # print("Width [pixels]: %.6s" % (width))
         g_width = 2.0 * (ROBOT_Z + 0.24) * np.tan(FOV / height_res * width / 2.0 / 180.0 * np.pi) #* 0.37
-        print("Point depth [mm]: ", point_depth)
-        print("G_width (ggcnn_kinova) [m]: %.6s" % (g_width))
+        # print("Point depth [mm]: ", point_depth)
+        # print("G_width (ggcnn_kinova) [m]: %.6s" % (g_width))
             
         # Get the grip width in meters
         width_m = width_out / crop_size_width * 2.0 * point_depth * np.tan(FOV * crop_size_width / height_res / 2.0 / 180.0 * np.pi) / 1000 #* 0.37
         width_m = abs(width_m[max_pixel_detected[0], max_pixel_detected[1]])
-        print("G_width (mvp) [m]: %.6s" % (width_m))
+        # print("G_width (mvp) [m]: %.6s" % (width_m))
 
         # These magic numbers are my camera intrinsic parameters.
         x = (max_pixel[1] - cx)/(fx) * point_depth
@@ -320,27 +320,31 @@ def depth_callback(depth_message):
         cmd_msg = Float32MultiArray()
         cmd_msg.data = [x/1000.0, y/1000.0, z/1000.0, ang, width_m, g_width]
         cmd_pub.publish(cmd_msg)
-        print("x: %.6s | y: %.6s | z: %.6s" % (cmd_msg.data[0], cmd_msg.data[1], cmd_msg.data[2]))
+        # print("x: %.6s | y: %.6s | z: %.6s" % (cmd_msg.data[0], cmd_msg.data[1], cmd_msg.data[2]))
 
         # Fixed frame related to the depth optical frame
-        br.sendTransform((0, 0.0, 0.0), quaternion_from_euler(0.244, 0.0, 0.0),
+        angle_offset = 0.15
+        br.sendTransform((0, 0.0, 0.0), quaternion_from_euler(angle_offset, 0.0, 0.0),
                          rospy.Time.now(),
                          "camera_depth_optical_frame_rotated",
                          "camera_depth_optical_frame")
 
         # -1 is multiplied by cmd_msg.data[3] because the object_detected frame is inverted
         if args.real:
-            offset_y = -0.018
-            offset_x = 0.018
-            offset_z = -0.095
+            offset_x = 0.02 # 0.018
+            offset_y = -0.05 # -0.018
+            offset_z = -0.013 # 0.013
         else:
-            offset_y = - 0.02
             offset_x = 0.0
+            offset_y = - 0.02
 
-        br.sendTransform((cmd_msg.data[0] + offset_x, cmd_msg.data[1] + offset_y, cmd_msg.data[2] + offset_z), quaternion_from_euler(0.0, 0.0, -1*cmd_msg.data[3]),
-                         rospy.Time.now(),
-                         "object_detected",
-                         "camera_depth_optical_frame_rotated")
+        br.sendTransform((cmd_msg.data[0] + offset_x, 
+                          cmd_msg.data[1] + offset_y, 
+                          (cmd_msg.data[2] + offset_z)*np.cos(angle_offset)), 
+                          quaternion_from_euler(0.0, 0.0, -1*cmd_msg.data[3]),
+                          rospy.Time.now(),
+                          "object_detected",
+                          "camera_depth_optical_frame_rotated")
 
 depth_sub = rospy.Subscriber(camera_topic, Image, depth_callback, queue_size=1)
 

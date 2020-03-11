@@ -72,10 +72,7 @@
 
   <joint name="CAM_support_joint" type="fixed">
     <!-- Its position is relative to the previous link -->
-    <!-- Its orientation is relative to its own -->
-    <!-- When you decrease the x component - the cam support move to the left -->
-    <!-- When you decrease the y component - the cam support move backwards -->
-    <!-- z - 30 -->
+    <!-- Its orientation is relative to its own frame -->
     <origin rpy="0 ${0.244} 1.57" xyz="${-0.021 + 0.03 - 0.01} ${-0.027 + 0.03 + 0.015} ${0.205 - 0.0086}"/>
     <parent link="wrist_2_link"/>
     <child link="CAM_support_link"/> 

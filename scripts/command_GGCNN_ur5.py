@@ -129,6 +129,13 @@ class vel_control(object):
         self.joint_vels_gripper = Float64MultiArray()
         self.pub_vel_gripper = rospy.Publisher('/gripper_controller_vel/command', Float64MultiArray,  queue_size=1)
 
+        # Class attribute used to perform TF transformations
+        self.tf = TransformListener()
+
+        # GGCNN
+        self.cmd_pub = rospy.Subscriber('ggcnn/out/command', Float32MultiArray, self.ggcnn_command, queue_size=1)
+        self.joint_values_ggcnn = None
+
         # visual tools from moveit
         # self.scene = PlanningSceneInterface("base_link")
         self.marker_publisher = rospy.Publisher('visualization_marker2', Marker, queue_size=1)
@@ -166,9 +173,6 @@ class vel_control(object):
         # Robotiq control
         self.pub_gripper_command = rospy.Publisher('Robotiq2FGripperRobotOutput', outputMsg.Robotiq2FGripper_robot_output, queue_size=1)
 
-        # Class attribute used to perform TF transformations
-        self.tf = TransformListener()
-
         # Denavit-Hartenberg parameters of UR5
         # The order of the parameters is d1, SO, EO, a2, a3, d4, d45, d5, d6
         self.ur5_param = (0.089159, 0.13585, -0.1197, 0.425, 0.39225, 0.10915, 0.093, 0.09465, 0.0823 + 0.15)
@@ -188,6 +192,22 @@ class vel_control(object):
         marker.color = color
         self.marker_publisher.publish(marker)
 
+    """
+    GGCNN Command Subscriber Callback
+    """
+    def ggcnn_command(self, msg):
+        # msg = rospy.wait_for_message('/ggcnn/out/command', Float32MultiArray)
+        self.tf.waitForTransform("base_link", "object_detected", rospy.Time(), rospy.Duration(4.0))
+        d = list(msg.data)
+        posCB, _ = self.tf.lookupTransform("base_link", "object_detected", rospy.Time())
+        _, oriObjCam = self.tf.lookupTransform("camera_depth_optical_frame", "object_detected", rospy.Time())
+        ori = euler_from_quaternion(oriObjCam)
+        
+        # self.add_sphere([posCB[0], posCB[1], posCB[2]], 0.05, ColorRGBA(0.0, 1.0, 0.0, 1.0))
+        self.joint_values_ggcnn = get_ik([posCB[0], posCB[1], posCB[2]])
+        self.joint_values_ggcnn[-1] = ori[-1]
+
+
     def genCommand(self, char, command):
         """Update the command according to the character entered by the user."""    
             
@@ -197,6 +217,9 @@ class vel_control(object):
             command.rGTO = 1 # Go to position request
             command.rSP  = 255 # Speed
             command.rFR  = 150 # Force
+
+        if char == 'r':
+            command.rACT = 0
 
         if char == 'c':
             command.rACT = 1
@@ -458,7 +481,7 @@ def main():
     turn_position_controller_on()
 
     # Calculate joint values equivalent to the HOME position
-    joint_values_home = get_ik([-0.4, -0.11, 0.35])
+    joint_values_home = get_ik([-0.4, -0.10, 0.40])
     
     ur5_vel = vel_control(arg, joint_values_home)
     
@@ -473,53 +496,47 @@ def main():
     else:
         rospy.on_shutdown(ur5_vel.home_real_robot) # Not working on real robot
         ur5_vel.set_pos_real_robot(joint_values_home)
+        ur5_vel.command_gripper('r')
+        rospy.sleep(1)
         ur5_vel.command_gripper('a')
         ur5_vel.command_gripper('o')
     
     GRIPPER_INIT = False
 
-    msg = rospy.wait_for_message('/ggcnn/out/command', Float32MultiArray)
-    ur5_vel.tf.waitForTransform("base_link", "object_detected", rospy.Time(), rospy.Duration(4.0))
-    d = list(msg.data)
-    posCB, _ = ur5_vel.tf.lookupTransform("base_link", "object_detected", rospy.Time())
-    _, oriObjCam = ur5_vel.tf.lookupTransform("camera_depth_optical_frame", "object_detected", rospy.Time())
-    ori = euler_from_quaternion(oriObjCam)
-    
-    ur5_vel.add_sphere([posCB[0], posCB[1], posCB[2]], 0.05, ColorRGBA(0.0, 1.0, 0.0, 1.0))
-    joint_values = get_ik([posCB[0], posCB[1], posCB[2]])
-    joint_values[-1] = ori[-1] 
-    
-    raw_input("==== Press enter to move the robot to the goal position!")
-    if arg.gazebo:
-        ur5_vel.move_to_pos(joint_values)
-    else:
-        ur5_vel.set_pos_real_robot(joint_values)
+    while not rospy.is_shutdown():
+        
 
-    if arg.gazebo:
-        # Start monitoring gripper torques
-        STARTED_GRIPPER = True
+        raw_input("==== Press enter to move the robot to the goal position!")
+        if arg.gazebo:
+            ur5_vel.move_to_pos(joint_values)
+        else:
+            ur5_vel.set_pos_real_robot(ur5_vel.joint_values_ggcnn)
 
-    raw_input("==== Press enter to close the gripper!")
-    if arg.gazebo:
-        GRASPING = True
-        ur5_vel.gripper_vel_control_close()
-    else:
-        ur5_vel.command_gripper('c')
+        if arg.gazebo:
+            # Start monitoring gripper torques
+            STARTED_GRIPPER = True
 
-    # After this raw_input, the rospy.on_shutdown will be called
-    raw_input("==== Press enter to 'home' the robot!")
-    if arg.gazebo:
-        ur5_vel.home_pos()        
-    else:
-        ur5_vel.set_pos_real_robot(joint_values_home)
+        raw_input("==== Press enter to close the gripper!")
+        if arg.gazebo:
+            GRASPING = True
+            ur5_vel.gripper_vel_control_close()
+        else:
+            ur5_vel.command_gripper('c')
+
+        # After this raw_input, the rospy.on_shutdown will be called
+        raw_input("==== Press enter to 'home' the robot!")
+        if arg.gazebo:
+            ur5_vel.home_pos()        
+        else:
+            ur5_vel.set_pos_real_robot(joint_values_home)
 
 
-    raw_input("==== Press enter to open the gripper!")
-    if arg.gazebo:
-        MOVE_GRIPPER = True    
-        ur5_vel.gripper_vel_control_open()
-    else:
-        ur5_vel.command_gripper('o')
+        raw_input("==== Press enter to open the gripper!")
+        if arg.gazebo:
+            MOVE_GRIPPER = True    
+            ur5_vel.gripper_vel_control_open()
+        else:
+            ur5_vel.command_gripper('o')
 
 if __name__ == '__main__':
     try:

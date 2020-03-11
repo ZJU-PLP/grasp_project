@@ -84,8 +84,8 @@ Processing enabled by this node:
   <!-- If set to true, will publish additional topics with the all the images aligned to the depth image.
        The topics are of the form: /camera/aligned_depth_to_color/image_raw etc. -->
   <arg name="align_depth"         default="true"/>
-  <!-- <arg name="filters" value="disparity,temporal,spatial"/> -->
-  <arg name="filters"             default="disparity,temporal,spatial"/>
+  <arg name="filters" value="disparity,temporal,spatial"/>
+  <!-- <arg name="filters"             default=""/> -->
 
   <!-- rgbd_launch specific arguments -->
 
@@ -110,8 +110,8 @@ Processing enabled by this node:
   <arg name="ir_processing"                   default="true"/>
   <arg name="depth_processing"                default="true"/>
   <arg name="depth_registered_processing"     default="true"/>
-  <arg name="disparity_processing"            default="false"/>
-  <arg name="disparity_registered_processing" default="false"/>
+  <arg name="disparity_processing"            default="true"/>
+  <arg name="disparity_registered_processing" default="true"/>
   <arg name="hw_registered_processing"        default="$(arg align_depth)" />
   <arg name="sw_registered_processing"        default="true" unless="$(arg align_depth)" />
   <arg name="sw_registered_processing"        default="false" if="$(arg align_depth)" />

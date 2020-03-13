@@ -199,7 +199,7 @@ class vel_control(object):
         # msg = rospy.wait_for_message('/ggcnn/out/command', Float32MultiArray)
         self.tf.waitForTransform("base_link", "object_detected", rospy.Time(), rospy.Duration(4.0))
         d = list(msg.data)
-        posCB, _ = self.tf.lookupTransform("base_link", "object_detected", rospy.Time())
+        posCB, _ = self.tf.lookupTransform("base_link", "object_link", rospy.Time())
         _, oriObjCam = self.tf.lookupTransform("camera_depth_optical_frame", "object_detected", rospy.Time())
         ori = euler_from_quaternion(oriObjCam)
         
@@ -481,7 +481,7 @@ def main():
     turn_position_controller_on()
 
     # Calculate joint values equivalent to the HOME position
-    joint_values_home = get_ik([-0.4, -0.10, 0.40])
+    joint_values_home = get_ik([-0.4, -0.11, 0.40])
     
     ur5_vel = vel_control(arg, joint_values_home)
     
@@ -508,7 +508,7 @@ def main():
 
         raw_input("==== Press enter to move the robot to the goal position!")
         if arg.gazebo:
-            ur5_vel.move_to_pos(joint_values)
+            ur5_vel.move_to_pos(ur5_vel.joint_values_ggcnn)
         else:
             ur5_vel.set_pos_real_robot(ur5_vel.joint_values_ggcnn)
 

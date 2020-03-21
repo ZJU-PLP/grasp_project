@@ -4,6 +4,7 @@ import rospy
 import actionlib
 import numpy as np
 import argparse
+import copy
 import rosservice
 
 from std_msgs.msg import Float64MultiArray, MultiArrayDimension, Header, ColorRGBA, Float32MultiArray
@@ -133,9 +134,11 @@ class vel_control(object):
         self.tf = TransformListener()
 
         # GGCNN
-        self.cmd_pub = rospy.Subscriber('ggcnn/out/command', Float32MultiArray, self.ggcnn_command, queue_size=1)
         self.joint_values_ggcnn = None
-
+        self.posCB = None
+        self.ori = None
+        self.cmd_pub = rospy.Subscriber('ggcnn/out/command', Float32MultiArray, self.ggcnn_command, queue_size=1)
+        
         # visual tools from moveit
         # self.scene = PlanningSceneInterface("base_link")
         self.marker_publisher = rospy.Publisher('visualization_marker2', Marker, queue_size=1)
@@ -172,6 +175,7 @@ class vel_control(object):
 
         # Robotiq control
         self.pub_gripper_command = rospy.Publisher('Robotiq2FGripperRobotOutput', outputMsg.Robotiq2FGripper_robot_output, queue_size=1)
+        self.d = None
 
         # Denavit-Hartenberg parameters of UR5
         # The order of the parameters is d1, SO, EO, a2, a3, d4, d45, d5, d6
@@ -198,19 +202,19 @@ class vel_control(object):
     def ggcnn_command(self, msg):
         # msg = rospy.wait_for_message('/ggcnn/out/command', Float32MultiArray)
         self.tf.waitForTransform("base_link", "object_detected", rospy.Time(), rospy.Duration(4.0))
-        d = list(msg.data)
-        posCB, _ = self.tf.lookupTransform("base_link", "object_link", rospy.Time())
+        self.d = list(msg.data)
+        # print(self.d)
+        self.posCB, _ = self.tf.lookupTransform("base_link", "object_link", rospy.Time())
         _, oriObjCam = self.tf.lookupTransform("camera_depth_optical_frame", "object_detected", rospy.Time())
-        ori = euler_from_quaternion(oriObjCam)
-        
+        self.ori = euler_from_quaternion(oriObjCam)
+
         # self.add_sphere([posCB[0], posCB[1], posCB[2]], 0.05, ColorRGBA(0.0, 1.0, 0.0, 1.0))
-        self.joint_values_ggcnn = get_ik([posCB[0], posCB[1], posCB[2]])
-        self.joint_values_ggcnn[-1] = ori[-1]
-
-
-    def genCommand(self, char, command):
+        self.joint_values_ggcnn = get_ik([self.posCB[0], self.posCB[1], self.posCB[2]])
+        self.joint_values_ggcnn[-1] = self.ori[-1]
+        
+    def genCommand(self, char, command, pos = None):
         """Update the command according to the character entered by the user."""    
-            
+
         if char == 'a':
             # command = outputMsg.Robotiq2FGripper_robot_output();
             command.rACT = 1 # Gripper activation
@@ -226,6 +230,15 @@ class vel_control(object):
             command.rGTO = 1
             command.rATR = 0
             command.rPR = 255
+            command.rSP = 40
+            command.rFR = 150
+            
+        # @param pos Gripper width in meters. [0, 0.087]
+        if char == 'p':
+            command.rACT = 1
+            command.rGTO = 1
+            command.rATR = 0
+            command.rPR = int(np.clip((13.-230.)/0.14 * self.d[-2] + 230., 0, 255))
             command.rSP = 40
             command.rFR = 150
 
@@ -434,14 +447,14 @@ class vel_control(object):
     This method was created because the real robot always reach the correct 
     position but it is not always true for gazebo
     """
-    def set_pos_real_robot(self, joint_values):
+    def set_pos_real_robot(self, joint_values, time = 18.0):
         global GRIPPER_INIT
         turn_position_controller_on()
         rospy.sleep(0.1)
 
         # First point is current position
         try:
-            self.goal.trajectory.points = [(JointTrajectoryPoint(positions=joint_values, velocities=[0]*6, time_from_start=rospy.Duration(self.final_traj_duration)))]
+            self.goal.trajectory.points = [(JointTrajectoryPoint(positions=joint_values, velocities=[0]*6, time_from_start=rospy.Duration(time)))]
             self.client.send_goal(self.goal)
             self.client.wait_for_result()
         except KeyboardInterrupt:
@@ -497,7 +510,7 @@ def main():
         rospy.on_shutdown(ur5_vel.home_real_robot) # Not working on real robot
         ur5_vel.set_pos_real_robot(joint_values_home)
         ur5_vel.command_gripper('r')
-        rospy.sleep(1)
+        rospy.sleep(0.5)
         ur5_vel.command_gripper('a')
         ur5_vel.command_gripper('o')
     
@@ -505,12 +518,27 @@ def main():
 
     while not rospy.is_shutdown():
         
+        raw_input("==== Press enter to close the gripper to a pre-grasp position!")
+        if arg.gazebo:
+            GRASPING = True
+            ur5_vel.gripper_vel_control_close()
+        else:
+            # print(ur5_vel.d[-2])
+            ur5_vel.command_gripper('p')
 
         raw_input("==== Press enter to move the robot to the goal position!")
         if arg.gazebo:
             ur5_vel.move_to_pos(ur5_vel.joint_values_ggcnn)
         else:
-            ur5_vel.set_pos_real_robot(ur5_vel.joint_values_ggcnn)
+            joint_values_ggcnn = get_ik([ur5_vel.posCB[0], ur5_vel.posCB[1], ur5_vel.posCB[2]])
+            joint_values_ggcnn[-1] = ur5_vel.ori[-1]
+            
+            joint_values_ggcnn_inicial = get_ik([ur5_vel.posCB[0], ur5_vel.posCB[1], ur5_vel.posCB[2] + 0.15])
+            joint_values_ggcnn_inicial[-1] = ur5_vel.ori[-1]
+
+            ur5_vel.set_pos_real_robot(joint_values_ggcnn_inicial, 5)
+            rospy.sleep(0.3)
+            ur5_vel.set_pos_real_robot(joint_values_ggcnn)
 
         if arg.gazebo:
             # Start monitoring gripper torques
@@ -521,6 +549,7 @@ def main():
             GRASPING = True
             ur5_vel.gripper_vel_control_close()
         else:
+            print(ur5_vel.d[-2])
             ur5_vel.command_gripper('c')
 
         # After this raw_input, the rospy.on_shutdown will be called

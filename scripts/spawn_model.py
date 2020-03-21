@@ -78,7 +78,7 @@ def main():
     rospy.sleep(0.2)
 
     ptFinal = [0.1, -0.55, 0.0]    
-    oriFinal = quaternion_from_euler(0.0, 0.0, 0.7)
+    oriFinal = quaternion_from_euler(0.0, 0.0, 2.0)
     moving2 = Moving("custom_box", Spawning1, x_position + ptFinal[0], y_position + ptFinal[1], z_position + ptFinal[2], oriFinal, path_box)
     moving2.spawning()
 

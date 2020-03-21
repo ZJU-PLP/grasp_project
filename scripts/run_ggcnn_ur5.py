@@ -284,6 +284,7 @@ def depth_callback(depth_message):
         # Get the grip width in meters
         width_m = width_out / crop_size_width * 2.0 * point_depth * np.tan(FOV * crop_size_width / height_res / 2.0 / 180.0 * np.pi) / 1000 #* 0.37
         width_m = abs(width_m[max_pixel_detected[0], max_pixel_detected[1]])
+        print("Width_m: ", width_m)
         
         # These magic numbers are my camera intrinsic parameters.
         x = (max_pixel[1] - cx)/(fx) * point_depth
@@ -323,17 +324,11 @@ def depth_callback(depth_message):
         depth_pub.publish(bridge.cv2_to_imgmsg(depth_crop))
         ang_pub.publish(bridge.cv2_to_imgmsg(ang_out))
 
-        # Output the best grasp pose relative to camera.
-        cmd_msg = Float32MultiArray()
-        cmd_msg.data = [x/1000.0, y/1000.0, z/1000.0, ang, width_m, g_width]
-        cmd_pub.publish(cmd_msg)
-        # print("x: %.6s | y: %.6s | z: %.6s" % (cmd_msg.data[0], cmd_msg.data[1], cmd_msg.data[2]))
-
         # -1 is multiplied by cmd_msg.data[3] because the object_detected frame is inverted
         if args.real:
-            offset_x = 0.01 # 0.002
-            offset_y = 0.01 # -0.05
-            offset_z = 0.0 # 0.013
+            offset_x = -0.03 # 0.002
+            offset_y = 0.02 # -0.05
+            offset_z = 0.058 # 0.013
             # Fixed frame related to the depth optical frame
             angle_offset = 0.0
             angle_deviation = 1
@@ -343,6 +338,12 @@ def depth_callback(depth_message):
             offset_z = 0.0
             angle_offset = 0.0
             angle_deviation = 1 #np.cos(angle_offset)
+
+        # Output the best grasp pose relative to camera.
+        cmd_msg = Float32MultiArray()
+        cmd_msg.data = [x/1000.0, y/1000.0, z/1000.0, ang, width_m, g_width]
+        cmd_pub.publish(cmd_msg)
+        # print("x: %.6s | y: %.6s | z: %.6s" % (cmd_msg.data[0], cmd_msg.data[1], cmd_msg.data[2]))        
 
         # The transformation between object_detected and base_link can be done way better with TF2
         br.sendTransform((0.0, 0.0, 0.0), quaternion_from_euler(angle_offset, 0.0, 0.0),

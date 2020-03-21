@@ -92,11 +92,6 @@ obs: The robot may not start correctly due to a hack method used to set initial 
 roslaunch grasp_project gazebo_ur5.launch
 ```
 
-Spawn a box into the Gazebo:
-```bash
-rosrun grasp_project spawn_model.py
-```
-
 Launch RVIZ if you want to see the frame (object_detected) corresponding to the object detected by GGCNN and the point cloud.
 In order to see the point cloud, please add pointcloud2 into the RVIZ and select the correct topic:
 ```bash
@@ -110,7 +105,7 @@ rosrun grasp_project run_ggcnn_ur5.py
 
 Running this node will move the robot to the position published by the run_ggcnn_ur5.py node.
 ```bash
-rosrun grasp_project command_GGCNN_ur5.py --OriON --gazebo
+rosrun grasp_project command_GGCNN_ur5.py --gazebo
 ```
 
 You might want to see the grasp or any other image. In order to do that, you can use the rqt_image_view.
@@ -140,6 +135,38 @@ points:
 <a name="5.0"></a>
 ### 5.0 Connecting with real UR5
 
+Use the following command in order to connect with real UR5.
+If you are using velocity control, do not use bring_up. Use ur5_ros_control instead.
+
+```
+roslaunch grasp_project ur5_ros_control.launch robot_ip:=192.168.131.13
+```
+
+Launch the real Intel Realsense D435
+```
+roslaunch grasp_project rs_d435_camera.launch
+```
+
+Launch the gripper control node
+```
+rosrun robotiq_2f_gripper_control Robotiq2FGripperRtuNode.py /dev/ttyUSB0
+```
+
+Launch the ggcnn node
+```
+rosrun grasp_project run_ggcnn_ur5.py --real
+```
+
+Launch the main node of the Intel Realsense D435
+```
+rosrun grasp_project command_GGCNN_ur5.py
+```
+
+If you want to visualize the depth or point cloud, you can launch RVIZ
+```
+roslaunch grasp_project rviz_ur5.launch
+```
+
 Firstly check the machine IP. The IP configured on the robot must have the last digit different.
 
 ```bash
@@ -160,23 +187,6 @@ Set up a connection on Ubuntu according to the following figure
 
 ![config_ethernet2](https://user-images.githubusercontent.com/28100951/71323962-fe29f880-24b7-11ea-86dc-756729932de4.jpg)
 
-Use the following command in order to connect with real UR5.
-If you are using velocity control, do not use bring_up. Use ur5_ros_control instead.
-
-```
-roslaunch grasp_project ur5_ros_control.launch robot_ip:=192.168.131.13
-```
-
-Launch the real Intel Realsense D435
-```
-roslaunch grasp_project rs_d435_camera.launch
-```
-
-Launch the main node of the Intel Realsense D435
-```
-rosrun grasp_project command_GGCNN_ur5.py --real
-```
-
 <a name="6.0"></a>
 ### 6.0 Meetings minutes
 #### Meeting - 25/11/2019
@@ -191,6 +201,6 @@ Topics covered:
 #### March/20
 - [x] Test realsense post-processing to enhance depth images - librealsense/examples/post-processing
 - [x] Record a rosbag file of the realsense depth cam
-- [ ] Set the right position for the object detected frame
-- [ ] Test the goal position using UR5
-- [ ] Implement Robotiq gripper and force control
+- [x] Set the right position for the object detected frame
+- [x] Test the goal position using UR5
+- [x] Implement Robotiq gripper and force control

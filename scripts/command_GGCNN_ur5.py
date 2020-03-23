@@ -29,7 +29,7 @@ from get_geometric_jacobian import *
 from ur_inverse_kinematics import *
 
 # Robotiq
-import roslib; roslib.load_manifest('robotiq_2f_gripper_control')
+# import roslib; roslib.load_manifest('robotiq_2f_gripper_control')
 from robotiq_2f_gripper_control.msg import _Robotiq2FGripper_robot_output  as outputMsg
 
 #from pyquaternion import Quaternion

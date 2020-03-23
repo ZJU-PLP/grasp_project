@@ -25,7 +25,8 @@ The method used here is based on [GGCNN](https://github.com/dougsm/ggcnn_kinova_
 ### 2.0 Required packages - Kinetic Version
 
 - [Realsense Gazebo Plugin](https://github.com/pal-robotics/realsense_gazebo_plugin)
-- [Realsense-ros](https://github.com/IntelRealSense/realsense-ros)
+- [Realsense-ros](https://github.com/IntelRealSense/realsense-ros) Release version 2.2.11
+- [Librealsense](https://github.com/IntelRealSense/librealsense) Release version 2.31.0 - Install from source
 - [Moveit Kinetic](https://moveit.ros.org/install/)
 - [Moveit Python](https://github.com/mikeferguson/moveit_python)
 - [Robotiq Gripper](https://github.com/crigroup/robotiq)
@@ -45,6 +46,8 @@ Install any dependencies you might have missed by using this command in catkin_w
 ```bash
 rosdep install --from-paths src --ignore-src -r -y --rosdistro kinetic
 ```
+
+> **_NOTE:_** Remember to always update the [Intel Realsense SDK](https://github.com/IntelRealSense/librealsense/releases) to the required version by realsense-ros pkg
 
 #### System and further required packages:
 Please check the correct version of the cuda based on the Nvidia driver version (https://docs.nvidia.com/deploy/cuda-compatibility/index.html)
@@ -204,3 +207,6 @@ Topics covered:
 - [x] Set the right position for the object detected frame
 - [x] Test the goal position using UR5
 - [x] Implement Robotiq gripper and force control
+
+#### April/20
+- [] Update realsense-ros to the new version

@@ -29,7 +29,7 @@ from get_geometric_jacobian import *
 from ur_inverse_kinematics import *
 
 # Robotiq
-# import roslib; roslib.load_manifest('robotiq_2f_gripper_control')
+import roslib; roslib.load_manifest('robotiq_2f_gripper_control')
 from robotiq_2f_gripper_control.msg import _Robotiq2FGripper_robot_output  as outputMsg
 
 #from pyquaternion import Quaternion
@@ -52,10 +52,7 @@ GRIPPER_INIT = True
 def parse_args():
     parser = argparse.ArgumentParser(description='AAPF_Orientation')
     # store_false assumes that variable is already true and is only set to false if is given in command terminal
-    parser.add_argument('--armarker', action='store_true', help='Follow dynamic goal from ar_track_alvar package')
     parser.add_argument('--gazebo', action='store_true', help='Follow dynamic goal from ar_track_alvar package')
-    parser.add_argument('--dyntest', action='store_true', help='Follow dynamic goal from ar_track_alvar package')
-    parser.add_argument('--OriON', action='store_true', help='Activate Orientation Control')
     args = parser.parse_args()
     return args
 
@@ -175,7 +172,7 @@ class vel_control(object):
 
         # Robotiq control
         self.pub_gripper_command = rospy.Publisher('Robotiq2FGripperRobotOutput', outputMsg.Robotiq2FGripper_robot_output, queue_size=1)
-        self.d = None
+        self.d = None # msg received from GGCN
 
         # Denavit-Hartenberg parameters of UR5
         # The order of the parameters is d1, SO, EO, a2, a3, d4, d45, d5, d6

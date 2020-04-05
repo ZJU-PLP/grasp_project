@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import rospy
 import actionlib
@@ -132,7 +132,7 @@ class vel_control(object):
 
         # GGCNN
         self.joint_values_ggcnn = None
-        self.posCB = None
+        self.posGGCNN = None
         self.ori = None
         self.cmd_pub = rospy.Subscriber('ggcnn/out/command', Float32MultiArray, self.ggcnn_command, queue_size=1)
         
@@ -201,12 +201,12 @@ class vel_control(object):
         self.tf.waitForTransform("base_link", "object_detected", rospy.Time(), rospy.Duration(4.0))
         self.d = list(msg.data)
         # print(self.d)
-        self.posCB, _ = self.tf.lookupTransform("base_link", "object_link", rospy.Time())
+        self.posGGCNN, _ = self.tf.lookupTransform("base_link", "object_link", rospy.Time())
         _, oriObjCam = self.tf.lookupTransform("camera_depth_optical_frame", "object_detected", rospy.Time())
         self.ori = euler_from_quaternion(oriObjCam)
 
-        # self.add_sphere([posCB[0], posCB[1], posCB[2]], 0.05, ColorRGBA(0.0, 1.0, 0.0, 1.0))
-        self.joint_values_ggcnn = get_ik([self.posCB[0], self.posCB[1], self.posCB[2]])
+        # self.add_sphere([posGGCNN[0], posGGCNN[1], posGGCNN[2]], 0.05, ColorRGBA(0.0, 1.0, 0.0, 1.0))
+        self.joint_values_ggcnn = get_ik([self.posGGCNN[0], self.posGGCNN[1], self.posGGCNN[2]])
         self.joint_values_ggcnn[-1] = self.ori[-1]
         
     def genCommand(self, char, command, pos = None):
@@ -527,10 +527,10 @@ def main():
         if arg.gazebo:
             ur5_vel.move_to_pos(ur5_vel.joint_values_ggcnn)
         else:
-            joint_values_ggcnn = get_ik([ur5_vel.posCB[0], ur5_vel.posCB[1], ur5_vel.posCB[2]])
+            joint_values_ggcnn = get_ik([ur5_vel.posGGCNN[0], ur5_vel.posGGCNN[1], ur5_vel.posGGCNN[2]])
             joint_values_ggcnn[-1] = ur5_vel.ori[-1]
             
-            joint_values_ggcnn_inicial = get_ik([ur5_vel.posCB[0], ur5_vel.posCB[1], ur5_vel.posCB[2] + 0.15])
+            joint_values_ggcnn_inicial = get_ik([ur5_vel.posGGCNN[0], ur5_vel.posGGCNN[1], ur5_vel.posGGCNN[2] + 0.15])
             joint_values_ggcnn_inicial[-1] = ur5_vel.ori[-1]
 
             ur5_vel.set_pos_real_robot(joint_values_ggcnn_inicial, 5)

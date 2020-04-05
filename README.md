@@ -15,7 +15,9 @@
 <a name="1.0"></a>
 ### 1.0 Description
 
-Repository created to store my research about robot grasping. This repository is kept for backup only. It is not intended to be fully organized (in future versions, for sure)
+Repository created to store my research about robot grasping. This repository is kept for backup only. It is not intended to be fully organized (in future versions, for sure).
+
+This project is under development.
 
 The method used here is based on [GGCNN](https://github.com/dougsm/ggcnn_kinova_grasping) created by Doug Morrison.
 
